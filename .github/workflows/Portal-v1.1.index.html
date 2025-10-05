@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Anime</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        #welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeOut 1s ease 3s forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                pointer-events: none;
+            }
+        }
+
+        .anime-character {
+            text-align: center;
+            animation: bounceIn 0.8s ease;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1) rotate(5deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .character-img {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            border: 5px solid white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 120px;
+            margin: 0 auto 20px;
+        }
+
+        .speech-bubble {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 20px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            animation: popIn 0.5s ease 0.5s backwards;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 10px solid transparent;
+            border-top-color: white;
+        }
+
+        .speech-bubble h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .speech-bubble p {
+            color: #666;
+        }
+
+        #main-content {
+            opacity: 0;
+            animation: fadeIn 1s ease 4s forwards;
+            padding: 20px;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        header {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #333;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .user-info {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .section {
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .content-card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .content-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .content-card img,
+        .content-card video {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .content-card-body {
+            padding: 15px;
+        }
+
+        .content-card-body h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .content-card-body p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .admin-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .access-denied {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: #856404;
+        }
+
+        @media (max-width: 768px) {
+            .character-img {
+                width: 200px;
+                height: 200px;
+                font-size: 100px;
+            }
+
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="welcome-screen">
+        <div class="anime-character">
+            <div class="character-img">🌸</div>
+            <div class="speech-bubble">
+                <h2>¡Konnichiwa! 👋</h2>
+                <p>Bienvenido al portal. ¡Disfruta tu estancia!</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <header>
+            <nav>
+                <div class="logo">🌸 Portal Anime</div>
+                <div class="nav-links">
+                    <a href="#" onclick="showSection('home')">Inicio</a>
+                    <a href="#" onclick="showSection('gallery')">Galería</a>
+                </div>
+                <div class="user-info">
+                    <div id="guest-buttons">
+                        <button class="btn btn-primary" onclick="showLogin()">Iniciar Sesión</button>
+                    </div>
+                    <div id="user-logged" class="hidden">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <span id="userName"></span>
+                        <span id="adminBadge" class="admin-badge hidden">ADMIN</span>
+                        <button class="btn btn-secondary" onclick="logout()">Salir</button>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <div class="container">
+            <section id="home" class="section active">
+                <h1>¡Bienvenido al Portal! 🎌</h1>
+                <p>Este es un espacio para disfrutar contenido. Solo el administrador puede agregar contenido nuevo.</p>
+                <p>Explora la galería para ver el contenido disponible.</p>
+            </section>
+
+            <section id="upload" class="section">
+                <h1>Panel de Administrador 📤</h1>
+                <div id="adminPanel">
+                    <form id="uploadForm">
+                        <div class="form-group">
+                            <label>Tipo de contenido:</label>
+                            <select id="contentType" onchange="updateUploadForm()">
+                                <option value="image">Imagen (Archivo)</option>
+                                <option value="video">Video (Archivo)</option>
+                                <option value="url-image">Imagen (URL)</option>
+                                <option value="url-video">Video (URL)</option>
+                                <option value="info">Información</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Título:</label>
+                            <input type="text" id="contentTitle" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Descripción:</label>
+                            <textarea id="contentDescription"></textarea>
+                        </div>
+
+                        <div id="fileInputArea" class="form-group">
+                            <label>Seleccionar archivo:</label>
+                            <input type="file" id="contentFile" accept="image/*,video/*" style="padding: 5px;">
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                Sube imágenes (JPG, PNG, GIF) o videos (MP4, WEBM, etc.)
+                            </small>
+                        </div>
+
+                        <div id="urlInputArea" class="form-group" style="display: none;">
+                            <label>URL del contenido:</label>
+                            <input type="url" id="contentUrl" placeholder="https://ejemplo.com/imagen.jpg">
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                Pega aquí el link directo de tu imagen o video
+                            </small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Publicar Contenido</button>
+                    </form>
+                </div>
+            </section>
+
+            <section id="gallery" class="section">
+                <h1>Galería de Contenido 🖼️</h1>
+                <div class="content-grid" id="contentGrid">
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Iniciar Sesión</h2>
+                <button class="close-modal" onclick="closeModal('loginModal')">&times;</button>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Usuario:</label>
+                    <input type="text" id="loginUser" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña:</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
+                <small style="display: block; margin-top: 10px; color: #999; text-align: center;">
+                   Ingresa Usuario | Ingresa Contraseña
+                </small>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE ADMINISTRADOR
+        const ADMIN_USER = 'Inder';
+        const ADMIN_PASSWORD = 'admin123';
+
+        let currentUser = null;
+        let isAdmin = false;
+        let contentItems = [];
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        function showLogin() {
+            document.getElementById('loginModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (username === ADMIN_USER && password === ADMIN_PASSWORD) {
+                login(username, true);
+                alert('¡Bienvenido Administrador!');
+            } else {
+                alert('Usuario o contraseña incorrectos');
+            }
+            closeModal('loginModal');
+        });
+
+        function login(username, adminStatus) {
+            currentUser = username;
+            isAdmin = adminStatus;
+            document.getElementById('guest-buttons').classList.add('hidden');
+            document.getElementById('user-logged').classList.remove('hidden');
+            document.getElementById('userName').textContent = username;
+            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+            
+            if (isAdmin) {
+                document.getElementById('adminBadge').classList.remove('hidden');
+                // Agregar enlace al panel de administrador
+                const uploadLink = document.createElement('a');
+                uploadLink.href = '#';
+                uploadLink.textContent = 'Panel Admin';
+                uploadLink.onclick = () => showSection('upload');
+                uploadLink.style.cssText = 'color: #333; text-decoration: none; padding: 10px 20px; border-radius: 5px; transition: all 0.3s;';
+                uploadLink.onmouseover = () => {
+                    uploadLink.style.background = '#667eea';
+                    uploadLink.style.color = 'white';
+                };
+                uploadLink.onmouseout = () => {
+                    uploadLink.style.background = 'transparent';
+                    uploadLink.style.color = '#333';
+                };
+                document.querySelector('.nav-links').appendChild(uploadLink);
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            isAdmin = false;
+            document.getElementById('guest-buttons').classList.remove('hidden');
+            document.getElementById('user-logged').classList.add('hidden');
+            document.getElementById('adminBadge').classList.add('hidden');
+            
+            // Remover enlace de panel admin si existe
+            const navLinks = document.querySelector('.nav-links');
+            const lastLink = navLinks.lastElementChild;
+            if (lastLink.textContent === 'Panel Admin') {
+                lastLink.remove();
+            }
+            
+            showSection('home');
+        }
+
+        function updateUploadForm() {
+            const contentType = document.getElementById('contentType').value;
+            const fileInputArea = document.getElementById('fileInputArea');
+            const urlInputArea = document.getElementById('urlInputArea');
+            const fileInput = document.getElementById('contentFile');
+            
+            if (contentType === 'image' || contentType === 'video') {
+                // Mostrar selector de archivos
+                fileInputArea.style.display = 'block';
+                urlInputArea.style.display = 'none';
+                
+                // Actualizar el accept según el tipo
+                if (contentType === 'image') {
+                    fileInput.setAttribute('accept', 'image/*');
+                } else {
+                    fileInput.setAttribute('accept', 'video/*');
+                }
+            } else if (contentType === 'url-image' || contentType === 'url-video') {
+                // Mostrar input de URL
+                fileInputArea.style.display = 'none';
+                urlInputArea.style.display = 'block';
+            } else {
+                // Info - ocultar ambos
+                fileInputArea.style.display = 'none';
+                urlInputArea.style.display = 'none';
+            }
+        }
+
+        document.getElementById('contentType').addEventListener('change', updateUploadForm);
+
+        document.getElementById('uploadForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            if (!isAdmin) {
+                alert('Solo el administrador puede subir contenido');
+                return;
+            }
+
+            const title = document.getElementById('contentTitle').value;
+            const description = document.getElementById('contentDescription').value;
+            const type = document.getElementById('contentType').value;
+            const url = document.getElementById('contentUrl').value;
+            const file = document.getElementById('contentFile').files[0];
+
+            // Si es archivo local
+            if ((type === 'image' || type === 'video') && file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const newContent = {
+                        id: Date.now(),
+                        title: title,
+                        description: description,
+                        type: type,
+                        url: event.target.result,
+                        isLocal: true,
+                        user: currentUser,
+                        date: new Date().toLocaleDateString()
+                    };
+                    contentItems.push(newContent);
+                    renderGallery();
+                    alert('¡Contenido publicado exitosamente!');
+                    document.getElementById('uploadForm').reset();
+                    // Cambiar a la galería para ver el contenido
+                    showSection('gallery');
+                };
+                reader.readAsDataURL(file);
+            } 
+            // Si es URL
+            else if ((type === 'url-image' || type === 'url-video') && url) {
+                const newContent = {
+                    id: Date.now(),
+                    title: title,
+                    description: description,
+                    type: type,
+                    url: url,
+                    isLocal: false,
+                    user: currentUser,
+                    date: new Date().toLocaleDateString()
+                };
+                contentItems.push(newContent);
+                renderGallery();
+                alert('¡Contenido publicado exitosamente!');
+                document.getElementById('uploadForm').reset();
+                // Cambiar a la galería para ver el contenido
+                showSection('gallery');
+            }
+            // Si es información
+            else if (type === 'info') {
+                const newContent = {
+                    id: Date.now(),
+                    title: title,
+                    description: description,
+                    type: type,
+                    user: currentUser,
+                    date: new Date().toLocaleDateString()
+                };
+                contentItems.push(newContent);
+                renderGallery();
+                alert('¡Información publicada exitosamente!');
+                document.getElementById('uploadForm').reset();
+                // Cambiar a la galería para ver el contenido
+                showSection('gallery');
+            }
+            // Error - falta archivo o URL
+            else {
+                alert('Por favor selecciona un archivo o ingresa una URL');
+            }
+        });
+
+        function renderGallery() {
+            const grid = document.getElementById('contentGrid');
+            grid.innerHTML = '';
+
+            if (contentItems.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">No hay contenido publicado aún</p>';
+                return;
+            }
+
+            contentItems.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'content-card';
+
+                let mediaHTML = '';
+                const actualType = item.type.replace('url-', '');
+                
+                if (actualType === 'image') {
+                    mediaHTML = '<img src="' + item.url + '" alt="' + item.title + '" loading="lazy">';
+                } else if (actualType === 'video') {
+                    mediaHTML = '<video src="' + item.url + '" controls preload="metadata"></video>';
+                } else {
+                    mediaHTML = '<div style="height: 200px; background: #667eea; display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">📝</div>';
+                }
+
+                card.innerHTML = mediaHTML + '<div class="content-card-body"><h3>' + item.title + '</h3><p>' + item.description + '</p><p style="margin-top: 10px; font-size: 12px; color: #999;">Por: ' + item.user + ' | ' + item.date + '</p></div>';
+
+                grid.appendChild(card);
+            });
+        }
+
+        renderGallery();
+    </script>
+</body>
+</html>
