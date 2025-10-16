@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Portal Anime</title>
+    <title>Portal </title>
     <style>
         * {
             margin: 0;
@@ -279,7 +279,8 @@
         }
 
         .form-group input:focus,
-        .form-group textarea:focus {
+        .form-group textarea:focus,
+        .form-group select:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -287,6 +288,53 @@
         .form-group textarea {
             resize: vertical;
             min-height: 100px;
+        }
+
+        .category-selector {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .category-selector > div {
+            flex: 1;
+        }
+
+        .new-category-input {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .new-category-input.active {
+            display: block;
+        }
+
+        .category-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .category-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .category-btn.active {
+            background: #667eea;
+            color: white;
         }
 
         .content-grid {
@@ -329,6 +377,19 @@
         .content-card-body p {
             color: #666;
             font-size: 14px;
+        }
+
+        .category-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 5;
         }
 
         .delete-post-btn {
@@ -469,6 +530,80 @@
             margin-left: 10px;
         }
 
+        .share-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-share {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-share:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+
+        .btn-facebook {
+            background: #1877F2;
+            color: white;
+        }
+
+        .btn-twitter {
+            background: #1DA1F2;
+            color: white;
+        }
+
+        .btn-copy {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-copy.copied {
+            background: #28a745;
+        }
+
+        .stats-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
         @media (max-width: 768px) {
             .character-img {
                 width: 200px;
@@ -503,6 +638,10 @@
 
             .comment-input {
                 font-size: 16px;
+            }
+
+            .category-selector {
+                flex-direction: column;
             }
         }
     </style>
@@ -544,9 +683,25 @@
         <div class="container">
             <section id="home" class="section active">
                 <h1>¡Bienvenido al Portal! 🎌</h1>
+                
+                <div class="stats-banner">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalPosts">0</div>
+                        <div class="stat-label">Publicaciones</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalCategories">0</div>
+                        <div class="stat-label">Categorías</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalComments">0</div>
+                        <div class="stat-label">Comentarios</div>
+                    </div>
+                </div>
+
                 <p>Este es un espacio para disfrutar y compartir contenido.</p>
                 <p><strong>Regístrate</strong> para poder dejar comentarios en las publicaciones.</p>
-                <p>Solo el administrador puede subir y eliminar contenido.</p>
+                <p>El contenido está organizado por categorías para facilitar tu navegación.</p>
             </section>
 
             <section id="upload" class="section">
@@ -574,6 +729,21 @@
                             <textarea id="contentDescription"></textarea>
                         </div>
 
+                        <div class="form-group">
+                            <label>Categoría:</label>
+                            <div class="category-selector">
+                                <div>
+                                    <select id="categorySelect" onchange="toggleNewCategory()">
+                                        <option value="">Seleccionar categoría...</option>
+                                        <option value="nueva">➕ Crear nueva categoría</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="new-category-input" id="newCategoryInput">
+                                <input type="text" id="newCategoryName" placeholder="Nombre de la nueva categoría">
+                            </div>
+                        </div>
+
                         <div id="fileInputArea" class="form-group">
                             <label>Seleccionar archivo:</label>
                             <input type="file" id="contentFile" accept="image/*,video/*" style="padding: 5px;">
@@ -597,6 +767,11 @@
 
             <section id="gallery" class="section">
                 <h1>Galería de Contenido 🖼️</h1>
+                
+                <div class="category-filter" id="categoryFilter">
+                    <button class="category-btn active" onclick="filterByCategory('all')">📂 Todas</button>
+                </div>
+
                 <div class="content-grid" id="contentGrid"></div>
             </section>
         </div>
@@ -653,17 +828,55 @@
     <script>
         const ADMIN_USER = 'Inder';
         const ADMIN_PASSWORD = 'admin123';
+        const STORAGE_KEY = 'portalSharedData';
 
         let currentUser = null;
         let isAdmin = false;
-        let contentItems = [];
-        let registeredUsers = [{username: ADMIN_USER, password: ADMIN_PASSWORD, name: 'Administrador', email: 'admin@portal.com'}];
+        let currentCategory = 'all';
+
+        function getSharedData() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                return JSON.parse(data);
+            }
+            return {
+                contentItems: [],
+                categories: [],
+                registeredUsers: [{username: ADMIN_USER, password: ADMIN_PASSWORD, name: 'Administrador', email: 'admin@portal.com'}]
+            };
+        }
+
+        function saveSharedData(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            window.dispatchEvent(new Event('storage'));
+        }
+
+        let sharedData = getSharedData();
+
+        window.addEventListener('storage', () => {
+            sharedData = getSharedData();
+            updateCategorySelect();
+            updateCategoryFilter();
+            renderGallery();
+            updateStats();
+        });
+
+        function updateStats() {
+            const totalComments = sharedData.contentItems.reduce((sum, item) => sum + item.comments.length, 0);
+            document.getElementById('totalPosts').textContent = sharedData.contentItems.length;
+            document.getElementById('totalCategories').textContent = sharedData.categories.length;
+            document.getElementById('totalComments').textContent = totalComments;
+        }
 
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(section => {
                 section.classList.remove('active');
             });
             document.getElementById(sectionId).classList.add('active');
+            
+            if (sectionId === 'home') {
+                updateStats();
+            }
         }
 
         function showLogin() {
@@ -683,7 +896,7 @@
             const username = document.getElementById('loginUser').value;
             const password = document.getElementById('loginPassword').value;
 
-            const user = registeredUsers.find(u => u.username === username && u.password === password);
+            const user = sharedData.registeredUsers.find(u => u.username === username && u.password === password);
 
             if (user) {
                 const adminStatus = (username === ADMIN_USER);
@@ -703,18 +916,19 @@
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
 
-            const existingUser = registeredUsers.find(u => u.username === username);
+            const existingUser = sharedData.registeredUsers.find(u => u.username === username);
             if (existingUser) {
                 alert('El nombre de usuario ya está en uso');
                 return;
             }
 
-            registeredUsers.push({
+            sharedData.registeredUsers.push({
                 username: username,
                 password: password,
                 name: name,
                 email: email
             });
+            saveSharedData(sharedData);
 
             alert('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.');
             document.getElementById('registerForm').reset();
@@ -746,6 +960,7 @@
                     uploadLink.style.color = '#333';
                 };
                 document.querySelector('.nav-links').appendChild(uploadLink);
+                updateCategorySelect();
             }
 
             renderGallery();
@@ -764,6 +979,64 @@
             }
             
             showSection('home');
+            renderGallery();
+        }
+
+        function toggleNewCategory() {
+            const select = document.getElementById('categorySelect');
+            const newInput = document.getElementById('newCategoryInput');
+            
+            if (select.value === 'nueva') {
+                newInput.classList.add('active');
+            } else {
+                newInput.classList.remove('active');
+            }
+        }
+
+        function updateCategorySelect() {
+            const select = document.getElementById('categorySelect');
+            const currentValue = select.value;
+            
+            select.innerHTML = '<option value="">Seleccionar categoría...</option>';
+            
+            sharedData.categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                select.appendChild(option);
+            });
+            
+            const newOption = document.createElement('option');
+            newOption.value = 'nueva';
+            newOption.textContent = '➕ Crear nueva categoría';
+            select.appendChild(newOption);
+            
+            if (currentValue && sharedData.categories.includes(currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        function updateCategoryFilter() {
+            const filter = document.getElementById('categoryFilter');
+            filter.innerHTML = '<button class="category-btn active" onclick="filterByCategory(\'all\')">📂 Todas</button>';
+            
+            sharedData.categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'category-btn';
+                btn.textContent = cat;
+                btn.onclick = () => filterByCategory(cat);
+                filter.appendChild(btn);
+            });
+        }
+
+        function filterByCategory(category) {
+            currentCategory = category;
+            
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
             renderGallery();
         }
 
@@ -804,60 +1077,63 @@
             const type = document.getElementById('contentType').value;
             const url = document.getElementById('contentUrl').value;
             const file = document.getElementById('contentFile').files[0];
+            const categorySelect = document.getElementById('categorySelect').value;
+            const newCategoryName = document.getElementById('newCategoryName').value.trim();
+
+            let category = '';
+            
+            if (categorySelect === 'nueva') {
+                if (!newCategoryName) {
+                    alert('Por favor ingresa un nombre para la nueva categoría');
+                    return;
+                }
+                category = newCategoryName;
+                if (!sharedData.categories.includes(category)) {
+                    sharedData.categories.push(category);
+                }
+            } else if (categorySelect) {
+                category = categorySelect;
+            } else {
+                alert('Por favor selecciona o crea una categoría');
+                return;
+            }
+
+            const processContent = (contentUrl) => {
+                const newContent = {
+                    id: Date.now(),
+                    title: title,
+                    description: description,
+                    type: type,
+                    url: contentUrl,
+                    category: category,
+                    user: currentUser,
+                    date: new Date().toLocaleDateString(),
+                    comments: []
+                };
+                sharedData.contentItems.unshift(newContent);
+                saveSharedData(sharedData);
+                updateCategorySelect();
+                updateCategoryFilter();
+                renderGallery();
+                updateStats();
+                alert('¡Contenido publicado exitosamente!');
+                document.getElementById('uploadForm').reset();
+                document.getElementById('newCategoryInput').classList.remove('active');
+                showSection('gallery');
+            };
 
             if ((type === 'image' || type === 'video') && file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    const newContent = {
-                        id: Date.now(),
-                        title: title,
-                        description: description,
-                        type: type,
-                        url: event.target.result,
-                        user: currentUser,
-                        date: new Date().toLocaleDateString(),
-                        comments: []
-                    };
-                    contentItems.push(newContent);
-                    renderGallery();
-                    alert('¡Contenido publicado exitosamente!');
-                    document.getElementById('uploadForm').reset();
-                    showSection('gallery');
+                    processContent(event.target.result);
                 };
                 reader.readAsDataURL(file);
             } 
             else if ((type === 'url-image' || type === 'url-video') && url) {
-                const newContent = {
-                    id: Date.now(),
-                    title: title,
-                    description: description,
-                    type: type,
-                    url: url,
-                    user: currentUser,
-                    date: new Date().toLocaleDateString(),
-                    comments: []
-                };
-                contentItems.push(newContent);
-                renderGallery();
-                alert('¡Contenido publicado exitosamente!');
-                document.getElementById('uploadForm').reset();
-                showSection('gallery');
+                processContent(url);
             }
             else if (type === 'info') {
-                const newContent = {
-                    id: Date.now(),
-                    title: title,
-                    description: description,
-                    type: type,
-                    user: currentUser,
-                    date: new Date().toLocaleDateString(),
-                    comments: []
-                };
-                contentItems.push(newContent);
-                renderGallery();
-                alert('¡Información publicada exitosamente!');
-                document.getElementById('uploadForm').reset();
-                showSection('gallery');
+                processContent(null);
             }
             else {
                 alert('Por favor selecciona un archivo o ingresa una URL');
@@ -871,8 +1147,10 @@
             }
 
             if (confirm('¿Estás seguro de que quieres eliminar esta publicación?')) {
-                contentItems = contentItems.filter(item => item.id !== postId);
+                sharedData.contentItems = sharedData.contentItems.filter(item => item.id !== postId);
+                saveSharedData(sharedData);
                 renderGallery();
+                updateStats();
                 alert('Publicación eliminada');
             }
         }
@@ -892,7 +1170,7 @@
                 return;
             }
 
-            const post = contentItems.find(item => item.id === postId);
+            const post = sharedData.contentItems.find(item => item.id === postId);
             if (post) {
                 post.comments.push({
                     id: Date.now(),
@@ -900,7 +1178,9 @@
                     text: commentText,
                     date: new Date().toLocaleString()
                 });
+                saveSharedData(sharedData);
                 renderGallery();
+                updateStats();
             }
         }
 
@@ -911,11 +1191,85 @@
             }
 
             if (confirm('¿Estás seguro de que quieres eliminar este comentario?')) {
-                const post = contentItems.find(item => item.id === postId);
+                const post = sharedData.contentItems.find(item => item.id === postId);
                 if (post) {
                     post.comments = post.comments.filter(comment => comment.id !== commentId);
+                    saveSharedData(sharedData);
                     renderGallery();
+                    updateStats();
                 }
+            }
+        }
+
+        function shareContent(postId, platform) {
+            const post = sharedData.contentItems.find(item => item.id === postId);
+            if (!post) return;
+
+            const shareUrl = window.location.href.split('#')[0] + '#post-' + postId;
+            const shareText = post.title + ' - ' + post.description;
+
+            let url = '';
+            
+            switch(platform) {
+                case 'whatsapp':
+                    url = 'https://wa.me/?text=' + encodeURIComponent(shareText + ' ' + shareUrl);
+                    window.open(url, '_blank');
+                    break;
+                case 'facebook':
+                    url = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareUrl);
+                    window.open(url, '_blank', 'width=600,height=400');
+                    break;
+                case 'twitter':
+                    url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(shareUrl);
+                    window.open(url, '_blank', 'width=600,height=400');
+                    break;
+                case 'copy':
+                    copyToClipboard(shareUrl, postId);
+                    break;
+            }
+        }
+
+        function copyToClipboard(text, postId) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCopySuccess(postId);
+                }).catch(() => {
+                    fallbackCopyToClipboard(text, postId);
+                });
+            } else {
+                fallbackCopyToClipboard(text, postId);
+            }
+        }
+
+        function fallbackCopyToClipboard(text, postId) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showCopySuccess(postId);
+            } catch (err) {
+                alert('No se pudo copiar el enlace');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showCopySuccess(postId) {
+            const btn = document.getElementById('copy-btn-' + postId);
+            if (btn) {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✓ ¡Copiado!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
             }
         }
 
@@ -923,14 +1277,21 @@
             const grid = document.getElementById('contentGrid');
             grid.innerHTML = '';
 
-            if (contentItems.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">No hay contenido publicado aún</p>';
+            let itemsToShow = sharedData.contentItems;
+            
+            if (currentCategory !== 'all') {
+                itemsToShow = sharedData.contentItems.filter(item => item.category === currentCategory);
+            }
+
+            if (itemsToShow.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">No hay contenido publicado en esta categoría</p>';
                 return;
             }
 
-            contentItems.forEach(item => {
+            itemsToShow.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'content-card';
+                card.id = 'post-' + item.id;
 
                 let mediaHTML = '';
                 const actualType = item.type.replace('url-', '');
@@ -940,13 +1301,15 @@
                 } else if (actualType === 'video') {
                     mediaHTML = '<video src="' + item.url + '" controls preload="metadata"></video>';
                 } else {
-                    mediaHTML = '<div style="height: 200px; background: #667eea; display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">📝</div>';
+                    mediaHTML = '<div style="height: 200px; background: #667eea; display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">📄</div>';
                 }
 
                 let deleteBtn = '';
                 if (isAdmin) {
                     deleteBtn = '<button class="btn btn-danger delete-post-btn" onclick="deletePost(' + item.id + ')">🗑️</button>';
                 }
+
+                const categoryBadge = '<div class="category-badge">' + item.category + '</div>';
 
                 let commentsHTML = '<div class="comments-section">';
                 commentsHTML += '<strong style="color: #667eea;">💬 Comentarios (' + item.comments.length + ')</strong>';
@@ -978,13 +1341,40 @@
 
                 commentsHTML += '</div>';
 
-                card.innerHTML = deleteBtn + mediaHTML + '<div class="content-card-body"><h3>' + item.title + '</h3><p>' + item.description + '</p><p style="margin-top: 10px; font-size: 12px; color: #999;">Por: ' + item.user + ' | ' + item.date + '</p>' + commentsHTML + '</div>';
+                const shareButtonsHTML = '<div class="share-buttons">' +
+                    '<button class="btn-share btn-whatsapp" onclick="shareContent(' + item.id + ', \'whatsapp\')">📱 WhatsApp</button>' +
+                    '<button class="btn-share btn-facebook" onclick="shareContent(' + item.id + ', \'facebook\')">📘 Facebook</button>' +
+                    '<button class="btn-share btn-twitter" onclick="shareContent(' + item.id + ', \'twitter\')">🐦 Twitter</button>' +
+                    '<button class="btn-share btn-copy" id="copy-btn-' + item.id + '" onclick="shareContent(' + item.id + ', \'copy\')">🔗 Copiar enlace</button>' +
+                    '</div>';
+
+                card.innerHTML = categoryBadge + deleteBtn + mediaHTML + '<div class="content-card-body"><h3>' + item.title + '</h3><p>' + item.description + '</p><p style="margin-top: 10px; font-size: 12px; color: #999;">Por: ' + item.user + ' | ' + item.date + '</p>' + shareButtonsHTML + commentsHTML + '</div>';
 
                 grid.appendChild(card);
             });
         }
 
+        updateCategoryFilter();
         renderGallery();
+        updateStats();
+
+        window.addEventListener('load', () => {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#post-')) {
+                setTimeout(() => {
+                    const element = document.querySelector(hash);
+                    if (element) {
+                        showSection('gallery');
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        element.style.animation = 'highlight 2s ease';
+                    }
+                }, 4500);
+            }
+        });
+
+        const style = document.createElement('style');
+        style.textContent = '@keyframes highlight { 0%, 100% { box-shadow: 0 5px 20px rgba(0,0,0,0.1); } 50% { box-shadow: 0 5px 30px rgba(102, 126, 234, 0.5); transform: scale(1.02); } }';
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
