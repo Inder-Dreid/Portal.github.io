@@ -2,8 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Portal Anime</title>
     <style>
         * {
             margin: 0;
@@ -15,6 +18,9 @@
             font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: pan-y;
+            overflow-x: hidden;
         }
 
         #welcome-screen {
@@ -176,6 +182,8 @@
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .btn-primary {
@@ -474,11 +482,27 @@
             }
 
             .container {
-                padding: 20px;
+                padding: 15px;
             }
 
             .content-grid {
                 grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .form-group input,
+            .form-group textarea,
+            .form-group select {
+                font-size: 16px;
+            }
+
+            .comment-input {
+                font-size: 16px;
             }
         }
     </style>
@@ -964,4 +988,3 @@
     </script>
 </body>
 </html>
-
