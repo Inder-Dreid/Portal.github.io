@@ -490,12 +490,22 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
-            display: none;
+            display: none !important;
             justify-content: center;
             align-items: center;
             z-index: 1001;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0);
         }
-        .user-profile-modal.active { display: flex; }
+        .user-profile-modal.active { 
+            display: flex !important;
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
         .user-profile-content {
             background: white;
             border-radius: 15px;
@@ -904,24 +914,21 @@
         </div>
     </div>
 
-    <div class="user-profile-modal" id="userProfileModal">
-        <div class="user-profile-content">
-            <div class="user-profile-header">
-                <button class="user-profile-close" onclick="closeUserProfile()">×</button>
-                <div class="user-profile-avatar" id="profileAvatar">U</div>
-                <div class="user-profile-name" id="profileName">Usuario</div>
-                <div class="user-profile-username" id="profileUsername">@usuario</div>
+    <div class="modal" id="moderatorsModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Gestionar Moderadores</h2>
+                <button class="close-modal" onclick="closeModeratorsPanel()">&times;</button>
             </div>
-            <div class="user-profile-body">
-                <div class="user-profile-info">
-                    <div class="user-profile-info-item">
-                        <span>📧</span>
-                        <span id="profileEmail">email@ejemplo.com</span>
-                    </div>
+            <div style="max-height: 500px; overflow-y: auto;">
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Moderadores Actuales 🛡️</h3>
+                    <div id="moderatorsList"></div>
                 </div>
-                <div class="user-profile-actions">
-                    <button class="profile-btn profile-btn-message" onclick="startPrivateChat()">💬 Enviar mensaje</button>
-                    <button class="profile-btn profile-btn-block" id="blockButton" onclick="toggleBlockUser()">🚫 Bloquear</button>
+                <hr style="border: 1px solid #ddd;">
+                <div>
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Promover a Moderador ⬆️</h3>
+                    <div id="usersToPromoteList"></div>
                 </div>
             </div>
         </div>
@@ -938,6 +945,7 @@
 
         let currentUser = null;
         let isAdmin = false;
+        let isModerator = false;
         let currentCategory = 'all';
         let database = null;
         let firebaseInitialized = false;
@@ -959,7 +967,8 @@
                 email: 'admin@portal.com',
                 securityQuestion: '¿Cuál es tu color favorito?',
                 securityAnswer: 'azul',
-                profilePicture: null
+                profilePicture: null,
+                isModerator: false
             }]
         };
 
@@ -992,6 +1001,8 @@
                 const data = JSON.parse(session);
                 currentUser = data.username;
                 isAdmin = data.isAdmin;
+                const user = localData.registeredUsers.find(u => u.username === currentUser);
+                isModerator = user ? user.isModerator : false;
                 restoreLoggedInUI();
                 return true;
             }
@@ -1024,8 +1035,18 @@
             document.getElementById('userName').textContent = currentUser;
             updateUserAvatarDisplay();
             
-            if (isAdmin) {
+            const user = localData.registeredUsers.find(u => u.username === currentUser);
+            isModerator = user ? user.isModerator : false;
+
+            if (isAdmin || isModerator) {
                 document.getElementById('adminBadge').classList.remove('hidden');
+                if (isAdmin) {
+                    document.getElementById('adminBadge').textContent = 'ADMIN';
+                } else {
+                    document.getElementById('adminBadge').textContent = 'MOD';
+                    document.getElementById('adminBadge').style.background = '#4CAF50';
+                }
+                
                 const uploadLink = document.createElement('a');
                 uploadLink.href = '#';
                 uploadLink.textContent = 'Panel Admin';
@@ -1033,6 +1054,16 @@
                 uploadLink.onclick = (e) => { e.preventDefault(); showSection('upload'); };
                 uploadLink.style.cssText = 'color: #333; text-decoration: none; padding: 10px 20px; border-radius: 5px; transition: all 0.3s;';
                 document.querySelector('.nav-links').appendChild(uploadLink);
+                
+                if (isAdmin) {
+                    const moderatorsLink = document.createElement('a');
+                    moderatorsLink.href = '#';
+                    moderatorsLink.textContent = '👥 Moderadores';
+                    moderatorsLink.id = 'moderatorsLink';
+                    moderatorsLink.onclick = (e) => { e.preventDefault(); showModeratorsPanel(); };
+                    moderatorsLink.style.cssText = 'color: #333; text-decoration: none; padding: 10px 20px; border-radius: 5px; transition: all 0.3s;';
+                    document.querySelector('.nav-links').appendChild(moderatorsLink);
+                }
                 updateCategorySelect();
             }
             loadBlockedUsers();
@@ -1182,6 +1213,7 @@
                 const adminStatus = (username === ADMIN_USER);
                 currentUser = username;
                 isAdmin = adminStatus;
+                isModerator = user.isModerator || false;
                 saveUserSession(username, adminStatus);
                 restoreLoggedInUI();
                 listenToPrivateMessages();
@@ -1208,7 +1240,7 @@
             }
 
             localData.registeredUsers.push({
-                username, password, name, email, securityQuestion, securityAnswer, profilePicture: null
+                username, password, name, email, securityQuestion, securityAnswer, profilePicture: null, isModerator: false
             });
 
             saveLocalData();
@@ -1280,6 +1312,7 @@
         function logout() {
             currentUser = null;
             isAdmin = false;
+            isModerator = false;
             clearUserSession();
             document.getElementById('guest-buttons').classList.remove('hidden');
             document.getElementById('user-logged').classList.add('hidden');
@@ -1287,6 +1320,9 @@
             
             const adminLink = document.getElementById('adminLink');
             if (adminLink) adminLink.remove();
+            
+            const moderatorsLink = document.getElementById('moderatorsLink');
+            if (moderatorsLink) moderatorsLink.remove();
             
             if (isListOpen) toggleChatList();
             if (currentChatRecipient) closePrivateChat();
@@ -1340,8 +1376,8 @@
 
         document.getElementById('uploadForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            if (!isAdmin) {
-                alert('Solo admin puede publicar');
+            if (!isAdmin && !isModerator) {
+                alert('Solo admin y moderadores pueden publicar');
                 return;
             }
 
@@ -1581,8 +1617,38 @@
 
             if (!user) {
                 alert('Usuario no encontrado: ' + username);
-                console.log('Usuarios disponibles:', localData.registeredUsers.map(u => u.username));
                 return;
+            }
+
+            // Crear el modal dinámicamente si no existe
+            let profileModal = document.getElementById('userProfileModal');
+            if (!profileModal) {
+                profileModal = document.createElement('div');
+                profileModal.id = 'userProfileModal';
+                profileModal.className = 'user-profile-modal';
+                profileModal.innerHTML = `
+                    <div class="user-profile-content">
+                        <div class="user-profile-header">
+                            <button class="user-profile-close" onclick="closeUserProfile()">×</button>
+                            <div class="user-profile-avatar" id="profileAvatar">U</div>
+                            <div class="user-profile-name" id="profileName">Usuario</div>
+                            <div class="user-profile-username" id="profileUsername">@usuario</div>
+                        </div>
+                        <div class="user-profile-body">
+                            <div class="user-profile-info">
+                                <div class="user-profile-info-item">
+                                    <span>📧</span>
+                                    <span id="profileEmail">email@ejemplo.com</span>
+                                </div>
+                            </div>
+                            <div class="user-profile-actions">
+                                <button class="profile-btn profile-btn-message" onclick="startPrivateChat()">💬 Enviar mensaje</button>
+                                <button class="profile-btn profile-btn-block" id="blockButton" onclick="toggleBlockUser()">🚫 Bloquear</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(profileModal);
             }
 
             document.getElementById('profileName').textContent = user.name || username;
@@ -1590,10 +1656,12 @@
             
             // Solo mostrar email si es admin o si es su propia cuenta
             const emailElement = document.getElementById('profileEmail');
-            if (isAdmin || username === currentUser) {
+            const canSeeEmail = isAdmin || username === currentUser;
+            if (canSeeEmail) {
                 emailElement.textContent = user.email || 'No disponible';
+                emailElement.parentElement.style.display = 'flex';
             } else {
-                emailElement.textContent = 'Privado';
+                emailElement.parentElement.style.display = 'none';
             }
 
             const avatarEl = document.getElementById('profileAvatar');
@@ -1603,7 +1671,7 @@
                 avatarEl.textContent = username.charAt(0).toUpperCase();
             }
 
-            const blockBtn = document.getElementById('blockButton');
+            let blockBtn = document.getElementById('blockButton');
             if (blockedUsers.includes(username)) {
                 blockBtn.textContent = '✅ Desbloquear';
                 blockBtn.className = 'profile-btn profile-btn-unblock';
@@ -1612,12 +1680,61 @@
                 blockBtn.className = 'profile-btn profile-btn-block';
             }
 
-            document.getElementById('userProfileModal').classList.add('active');
+            // Agregar opción de moderador si es admin y el usuario no es admin
+            const userProfileActions = document.querySelector('.user-profile-actions');
+            if (userProfileActions) {
+                let moderatorBtn = userProfileActions.querySelector('[data-mod-btn="true"]');
+                
+                if (isAdmin && username !== ADMIN_USER) {
+                    if (!moderatorBtn) {
+                        moderatorBtn = document.createElement('button');
+                        moderatorBtn.setAttribute('data-mod-btn', 'true');
+                        moderatorBtn.className = 'profile-btn';
+                        userProfileActions.appendChild(moderatorBtn);
+                    }
+                    
+                    if (user.isModerator) {
+                        moderatorBtn.textContent = '👤 Remover Moderador';
+                        moderatorBtn.style.background = '#ff9800';
+                        moderatorBtn.style.color = 'white';
+                        moderatorBtn.onclick = () => {
+                            removeModerator(username);
+                            showUserProfile(username);
+                        };
+                    } else {
+                        moderatorBtn.textContent = '🛡️ Hacer Moderador';
+                        moderatorBtn.style.background = '#2196F3';
+                        moderatorBtn.style.color = 'white';
+                        moderatorBtn.onclick = () => {
+                            makeModerator(username);
+                            showUserProfile(username);
+                        };
+                    }
+                } else if (moderatorBtn) {
+                    moderatorBtn.remove();
+                }
+            }
+
+            // Mostrar el modal agregando la clase active
+            profileModal.classList.add('active');
         }
 
         function closeUserProfile() {
-            document.getElementById('userProfileModal').classList.remove('active');
+            const modal = document.getElementById('userProfileModal');
+            if (modal) {
+                modal.classList.remove('active');
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            }
             selectedUserProfile = null;
+        }
+
+        function closeAllModals() {
+            const userProfileModal = document.getElementById('userProfileModal');
+            if (userProfileModal) {
+                userProfileModal.remove();
+            }
         }
 
         function startPrivateChat() {
@@ -1647,6 +1764,118 @@
             setTimeout(() => {
                 openPrivateChat(selectedUserProfile);
             }, 100);
+        }
+
+        function makeModerator(username) {
+            if (!isAdmin) {
+                alert('Solo el admin puede hacer moderadores');
+                return;
+            }
+
+            const user = localData.registeredUsers.find(u => u.username === username);
+            if (!user) return;
+
+            user.isModerator = true;
+            saveLocalData();
+            saveToFirebase();
+            alert('¡' + username + ' ahora es moderador!');
+        }
+
+        function removeModerator(username) {
+            if (!isAdmin) {
+                alert('Solo el admin puede remover moderadores');
+                return;
+            }
+
+            const user = localData.registeredUsers.find(u => u.username === username);
+            if (!user) return;
+
+            user.isModerator = false;
+            saveLocalData();
+            saveToFirebase();
+            alert('¡' + username + ' ha sido degradado a usuario común!');
+        }
+
+        function showModeratorsPanel() {
+            if (!isAdmin) {
+                alert('Solo el admin puede acceder a este panel');
+                return;
+            }
+
+            const modal = document.getElementById('moderatorsModal');
+            if (modal) {
+                modal.classList.add('active');
+                renderModeratorsPanel();
+            } else {
+                console.error('Modal de moderadores no encontrado');
+            }
+        }
+
+        function closeModeratorsPanel() {
+            const modal = document.getElementById('moderatorsModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        function renderModeratorsPanel() {
+            const moderatorsList = document.getElementById('moderatorsList');
+            const usersToPromoteList = document.getElementById('usersToPromoteList');
+            
+            if (!moderatorsList || !usersToPromoteList) {
+                console.error('Elementos del panel de moderadores no encontrados');
+                return;
+            }
+
+            const moderators = localData.registeredUsers.filter(u => u.isModerator);
+
+            if (moderators.length === 0) {
+                moderatorsList.innerHTML = '<p style="color: #999;">No hay moderadores registrados</p>';
+            } else {
+                moderatorsList.innerHTML = '';
+                moderators.forEach(mod => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'background: #f0f0f0; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;';
+                    div.innerHTML = `
+                        <div>
+                            <strong>${mod.name}</strong> <br>
+                            <small style="color: #666;">@${mod.username}</small>
+                        </div>
+                        <button class="btn btn-danger" onclick="removeModerator('${mod.username}'); renderModeratorsPanel(); renderUsersToPromote();">Remover</button>
+                    `;
+                    moderatorsList.appendChild(div);
+                });
+            }
+
+            renderUsersToPromote();
+        }
+
+        function renderUsersToPromote() {
+            const usersToPromoteList = document.getElementById('usersToPromoteList');
+            if (!usersToPromoteList) {
+                console.error('Elemento usersToPromoteList no encontrado');
+                return;
+            }
+
+            const nonModerators = localData.registeredUsers.filter(u => !u.isModerator && u.username !== ADMIN_USER);
+
+            if (nonModerators.length === 0) {
+                usersToPromoteList.innerHTML = '<p style="color: #999;">Todos los usuarios son moderadores</p>';
+            } else {
+                usersToPromoteList.innerHTML = '';
+                nonModerators.forEach(user => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'background: #f9f9f9; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;';
+                    div.innerHTML = `
+                        <div>
+                            <strong>${user.name}</strong> <br>
+                            <small style="color: #666;">@${user.username}</small>
+                        </div>
+                        <button class="btn btn-primary" onclick="makeModerator('${user.username}'); renderModeratorsPanel(); renderUsersToPromote();">Hacer MOD</button>
+                    `;
+                    usersToPromoteList.appendChild(div);
+                });
+            }
         }
 
         function toggleBlockUser() {
@@ -2000,6 +2229,7 @@
             if (typeof firebase !== 'undefined') {
                 loadUserSession();
                 initializeFirebase();
+                closeAllModals();
             } else {
                 setTimeout(waitForFirebase, 100);
             }
@@ -2010,8 +2240,10 @@
         updateCategoryFilter();
         renderGallery();
         updateStats();
+        closeAllModals();
 
         window.addEventListener('load', () => {
+            closeAllModals();
             const hash = window.location.hash;
             if (hash && hash.startsWith('#post-')) {
                 setTimeout(() => {
