@@ -705,7 +705,6 @@
                 <div class="nav-links">
                     <a href="#" onclick="event.preventDefault(); showSection('home');">Inicio</a>
                     <a href="#" onclick="event.preventDefault(); showSection('gallery');">Galería</a>
-                    <a href="#" onclick="event.preventDefault(); showSection('setup');">⚙️ Configuración</a>
                 </div>
                 <div class="user-info">
                     <div id="guest-buttons">
@@ -1043,66 +1042,6 @@
 
         loadLocalData();
         initializeFirebase();
-
-        document.getElementById('firebaseConfigForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const config = {
-                apiKey: document.getElementById('apiKey').value.trim(),
-                authDomain: document.getElementById('authDomain').value.trim(),
-                databaseURL: document.getElementById('databaseURL').value.trim(),
-                projectId: document.getElementById('projectId').value.trim(),
-                storageBucket: document.getElementById('storageBucket').value.trim(),
-                messagingSenderId: document.getElementById('messagingSenderId').value.trim(),
-                appId: document.getElementById('appId').value.trim()
-            };
-
-            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-            
-            alert('¡Configuración guardada! Recarga la página para aplicar los cambios.');
-            location.reload();
-        });
-
-        function testConnection() {
-            const statusDiv = document.getElementById('connectionStatus');
-            statusDiv.style.display = 'block';
-
-            if (!firebaseInitialized) {
-                statusDiv.style.background = '#f8d7da';
-                statusDiv.style.color = '#721c24';
-                statusDiv.innerHTML = '❌ Firebase no está configurado. Completa el formulario y guarda la configuración.';
-                return;
-            }
-
-            database.ref('.info/connected').once('value').then((snapshot) => {
-                if (snapshot.val() === true) {
-                    statusDiv.style.background = '#d4edda';
-                    statusDiv.style.color = '#155724';
-                    statusDiv.innerHTML = '✅ ¡Conexión exitosa! Firebase está funcionando correctamente.';
-                } else {
-                    statusDiv.style.background = '#f8d7da';
-                    statusDiv.style.color = '#721c24';
-                    statusDiv.innerHTML = '❌ No se pudo conectar a Firebase. Verifica tu configuración.';
-                }
-            }).catch((error) => {
-                statusDiv.style.background = '#f8d7da';
-                statusDiv.style.color = '#721c24';
-                statusDiv.innerHTML = '❌ Error: ' + error.message;
-            });
-        }
-
-        function loadFirebaseConfig() {
-            const config = defaultFirebaseConfig;
-            document.getElementById('apiKey').value = config.apiKey || '';
-            document.getElementById('authDomain').value = config.authDomain || '';
-            document.getElementById('databaseURL').value = config.databaseURL || '';
-            document.getElementById('projectId').value = config.projectId || '';
-            document.getElementById('storageBucket').value = config.storageBucket || '';
-            document.getElementById('messagingSenderId').value = config.messagingSenderId || '';
-            document.getElementById('appId').value = config.appId || '';
-        }
-
-        loadFirebaseConfig();
 
         function updateStats() {
             const totalComments = localData.contentItems.reduce((sum, item) => sum + (item.comments?.length || 0), 0);
