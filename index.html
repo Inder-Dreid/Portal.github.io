@@ -604,6 +604,47 @@
             opacity: 0.9;
         }
 
+        .firebase-notice {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .firebase-notice h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .firebase-notice p {
+            color: #856404;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .firebase-notice code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            color: #d63384;
+        }
+
+        .firebase-notice ol {
+            margin-left: 20px;
+            color: #856404;
+        }
+
+        .firebase-notice li {
+            margin-bottom: 8px;
+        }
+
+        .firebase-notice a {
+            color: #667eea;
+            font-weight: bold;
+        }
+
         @media (max-width: 768px) {
             .character-img {
                 width: 200px;
@@ -662,8 +703,9 @@
             <nav>
                 <div class="logo">🌸 Portal </div>
                 <div class="nav-links">
-                    <a href="#" onclick="showSection('home')">Inicio</a>
-                    <a href="#" onclick="showSection('gallery')">Galería</a>
+                    <a href="#" onclick="event.preventDefault(); showSection('home');">Inicio</a>
+                    <a href="#" onclick="event.preventDefault(); showSection('gallery');">Galería</a>
+                    <a href="#" onclick="event.preventDefault(); showSection('setup');">⚙️ Configuración</a>
                 </div>
                 <div class="user-info">
                     <div id="guest-buttons">
@@ -681,6 +723,67 @@
         </header>
 
         <div class="container">
+            <section id="setup" class="section">
+                <h1>⚙️ Configuración de Firebase</h1>
+                
+                <div class="firebase-notice">
+                    <h3>📋 Instrucciones para configurar Firebase</h3>
+                    <p><strong>Para que el contenido sea visible para TODOS los usuarios, necesitas configurar Firebase (es GRATIS):</strong></p>
+                    
+                    <ol>
+                        <li>Ve a <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a> y crea un proyecto</li>
+                        <li>En tu proyecto, ve a "Build" → "Realtime Database" → "Create Database"</li>
+                        <li>Selecciona "Start in test mode" (puedes configurar seguridad después)</li>
+                        <li>Ve a "Project Settings" (⚙️) → "General" y copia tu configuración</li>
+                        <li>Pega tu configuración abajo y guarda</li>
+                    </ol>
+
+                    <p><strong>Nota:</strong> Sin Firebase, el contenido solo se guarda localmente en tu navegador.</p>
+                </div>
+
+                <form id="firebaseConfigForm" style="background: white; padding: 20px; border-radius: 10px;">
+                    <div class="form-group">
+                        <label>API Key:</label>
+                        <input type="text" id="apiKey" value="" placeholder="AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXX">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Auth Domain:</label>
+                        <input type="text" id="authDomain" value="" placeholder="tu-proyecto.firebaseapp.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Database URL:</label>
+                        <input type="text" id="databaseURL" value="" placeholder="https://tu-proyecto-default-rtdb.firebaseio.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Project ID:</label>
+                        <input type="text" id="projectId" value="" placeholder="tu-proyecto">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Storage Bucket:</label>
+                        <input type="text" id="storageBucket" value="" placeholder="tu-proyecto.appspot.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Messaging Sender ID:</label>
+                        <input type="text" id="messagingSenderId" value="" placeholder="123456789012">
+                    </div>
+
+                    <div class="form-group">
+                        <label>App ID:</label>
+                        <input type="text" id="appId" value="" placeholder="1:123456789012:web:abcdef1234567890">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="margin-right: 10px;">💾 Guardar Configuración</button>
+                    <button type="button" class="btn btn-secondary" onclick="testConnection()">🔍 Probar Conexión</button>
+                </form>
+
+                <div id="connectionStatus" style="margin-top: 20px; padding: 15px; border-radius: 8px; display: none;"></div>
+            </section>
+
             <section id="home" class="section active">
                 <h1>¡Bienvenido al Portal! 🎌</h1>
                 
@@ -702,6 +805,9 @@
                 <p>Este es un espacio para disfrutar y compartir contenido.</p>
                 <p><strong>Regístrate</strong> para poder dejar comentarios en las publicaciones.</p>
                 <p>El contenido está organizado por categorías para facilitar tu navegación.</p>
+                <p style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                    <strong>💡 Tip:</strong> Si ves el botón "⚙️ Configuración", configura Firebase para que el contenido sea visible globalmente.
+                </p>
             </section>
 
             <section id="upload" class="section">
@@ -825,46 +931,155 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <script>
         const ADMIN_USER = 'Inder';
         const ADMIN_PASSWORD = 'admin123';
-        const STORAGE_KEY = 'portalSharedData';
+        const CONFIG_KEY = 'firebaseConfig';
+        const LOCAL_STORAGE_KEY = 'portalLocalData';
 
         let currentUser = null;
         let isAdmin = false;
         let currentCategory = 'all';
+        let database = null;
+        let firebaseInitialized = false;
 
-        function getSharedData() {
-            const data = localStorage.getItem(STORAGE_KEY);
-            if (data) {
-                return JSON.parse(data);
+        let localData = {
+            contentItems: [],
+            categories: [],
+            registeredUsers: [{username: ADMIN_USER, password: ADMIN_PASSWORD, name: 'Administrador', email: 'admin@portal.com'}]
+        };
+
+        function loadLocalData() {
+            const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (saved) {
+                localData = JSON.parse(saved);
             }
-            return {
-                contentItems: [],
-                categories: [],
-                registeredUsers: [{username: ADMIN_USER, password: ADMIN_PASSWORD, name: 'Administrador', email: 'admin@portal.com'}]
+        }
+
+        function saveLocalData() {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localData));
+        }
+
+        function initializeFirebase() {
+            const savedConfig = localStorage.getItem(CONFIG_KEY);
+            if (!savedConfig) return false;
+
+            try {
+                const config = JSON.parse(savedConfig);
+                firebase.initializeApp(config);
+                database = firebase.database();
+                firebaseInitialized = true;
+                
+                database.ref('content').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        localData.contentItems = data.contentItems || [];
+                        localData.categories = data.categories || [];
+                        updateCategorySelect();
+                        updateCategoryFilter();
+                        renderGallery();
+                        updateStats();
+                    }
+                });
+
+                database.ref('users').on('value', (snapshot) => {
+                    const users = snapshot.val();
+                    if (users) {
+                        localData.registeredUsers = users;
+                    }
+                });
+
+                return true;
+            } catch (error) {
+                console.error('Error initializing Firebase:', error);
+                return false;
+            }
+        }
+
+        function saveToFirebase() {
+            if (firebaseInitialized && database) {
+                database.ref('content').set({
+                    contentItems: localData.contentItems,
+                    categories: localData.categories
+                });
+                database.ref('users').set(localData.registeredUsers);
+            }
+        }
+
+        loadLocalData();
+        initializeFirebase();
+
+        document.getElementById('firebaseConfigForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const config = {
+                apiKey: document.getElementById('apiKey').value.trim(),
+                authDomain: document.getElementById('authDomain').value.trim(),
+                databaseURL: document.getElementById('databaseURL').value.trim(),
+                projectId: document.getElementById('projectId').value.trim(),
+                storageBucket: document.getElementById('storageBucket').value.trim(),
+                messagingSenderId: document.getElementById('messagingSenderId').value.trim(),
+                appId: document.getElementById('appId').value.trim()
             };
-        }
 
-        function saveSharedData(data) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            window.dispatchEvent(new Event('storage'));
-        }
-
-        let sharedData = getSharedData();
-
-        window.addEventListener('storage', () => {
-            sharedData = getSharedData();
-            updateCategorySelect();
-            updateCategoryFilter();
-            renderGallery();
-            updateStats();
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            
+            alert('¡Configuración guardada! Recarga la página para aplicar los cambios.');
+            location.reload();
         });
 
+        function testConnection() {
+            const statusDiv = document.getElementById('connectionStatus');
+            statusDiv.style.display = 'block';
+
+            if (!firebaseInitialized) {
+                statusDiv.style.background = '#f8d7da';
+                statusDiv.style.color = '#721c24';
+                statusDiv.innerHTML = '❌ Firebase no está configurado. Completa el formulario y guarda la configuración.';
+                return;
+            }
+
+            database.ref('.info/connected').once('value').then((snapshot) => {
+                if (snapshot.val() === true) {
+                    statusDiv.style.background = '#d4edda';
+                    statusDiv.style.color = '#155724';
+                    statusDiv.innerHTML = '✅ ¡Conexión exitosa! Firebase está funcionando correctamente.';
+                } else {
+                    statusDiv.style.background = '#f8d7da';
+                    statusDiv.style.color = '#721c24';
+                    statusDiv.innerHTML = '❌ No se pudo conectar a Firebase. Verifica tu configuración.';
+                }
+            }).catch((error) => {
+                statusDiv.style.background = '#f8d7da';
+                statusDiv.style.color = '#721c24';
+                statusDiv.innerHTML = '❌ Error: ' + error.message;
+            });
+        }
+
+        function loadFirebaseConfig() {
+            const savedConfig = localStorage.getItem(CONFIG_KEY);
+            if (savedConfig) {
+                const config = JSON.parse(savedConfig);
+                document.getElementById('apiKey').value = config.apiKey || '';
+                document.getElementById('authDomain').value = config.authDomain || '';
+                document.getElementById('databaseURL').value = config.databaseURL || '';
+                document.getElementById('projectId').value = config.projectId || '';
+                document.getElementById('storageBucket').value = config.storageBucket || '';
+                document.getElementById('messagingSenderId').value = config.messagingSenderId || '';
+                document.getElementById('appId').value = config.appId || '';
+            }
+        }
+
+        loadFirebaseConfig();
+
         function updateStats() {
-            const totalComments = sharedData.contentItems.reduce((sum, item) => sum + item.comments.length, 0);
-            document.getElementById('totalPosts').textContent = sharedData.contentItems.length;
-            document.getElementById('totalCategories').textContent = sharedData.categories.length;
+            const totalComments = localData.contentItems.reduce((sum, item) => sum + (item.comments?.length || 0), 0);
+            document.getElementById('totalPosts').textContent = localData.contentItems.length;
+            document.getElementById('totalCategories').textContent = localData.categories.length;
             document.getElementById('totalComments').textContent = totalComments;
         }
 
@@ -896,7 +1111,7 @@
             const username = document.getElementById('loginUser').value;
             const password = document.getElementById('loginPassword').value;
 
-            const user = sharedData.registeredUsers.find(u => u.username === username && u.password === password);
+            const user = localData.registeredUsers.find(u => u.username === username && u.password === password);
 
             if (user) {
                 const adminStatus = (username === ADMIN_USER);
@@ -916,19 +1131,21 @@
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
 
-            const existingUser = sharedData.registeredUsers.find(u => u.username === username);
+            const existingUser = localData.registeredUsers.find(u => u.username === username);
             if (existingUser) {
                 alert('El nombre de usuario ya está en uso');
                 return;
             }
 
-            sharedData.registeredUsers.push({
+            localData.registeredUsers.push({
                 username: username,
                 password: password,
                 name: name,
                 email: email
             });
-            saveSharedData(sharedData);
+            
+            saveLocalData();
+            saveToFirebase();
 
             alert('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.');
             document.getElementById('registerForm').reset();
@@ -999,7 +1216,7 @@
             
             select.innerHTML = '<option value="">Seleccionar categoría...</option>';
             
-            sharedData.categories.forEach(cat => {
+            localData.categories.forEach(cat => {
                 const option = document.createElement('option');
                 option.value = cat;
                 option.textContent = cat;
@@ -1011,7 +1228,7 @@
             newOption.textContent = '➕ Crear nueva categoría';
             select.appendChild(newOption);
             
-            if (currentValue && sharedData.categories.includes(currentValue)) {
+            if (currentValue && localData.categories.includes(currentValue)) {
                 select.value = currentValue;
             }
         }
@@ -1020,7 +1237,7 @@
             const filter = document.getElementById('categoryFilter');
             filter.innerHTML = '<button class="category-btn active" onclick="filterByCategory(\'all\')">📂 Todas</button>';
             
-            sharedData.categories.forEach(cat => {
+            localData.categories.forEach(cat => {
                 const btn = document.createElement('button');
                 btn.className = 'category-btn';
                 btn.textContent = cat;
@@ -1088,8 +1305,8 @@
                     return;
                 }
                 category = newCategoryName;
-                if (!sharedData.categories.includes(category)) {
-                    sharedData.categories.push(category);
+                if (!localData.categories.includes(category)) {
+                    localData.categories.push(category);
                 }
             } else if (categorySelect) {
                 category = categorySelect;
@@ -1110,8 +1327,11 @@
                     date: new Date().toLocaleDateString(),
                     comments: []
                 };
-                sharedData.contentItems.unshift(newContent);
-                saveSharedData(sharedData);
+                localData.contentItems.unshift(newContent);
+                
+                saveLocalData();
+                saveToFirebase();
+                
                 updateCategorySelect();
                 updateCategoryFilter();
                 renderGallery();
@@ -1147,8 +1367,9 @@
             }
 
             if (confirm('¿Estás seguro de que quieres eliminar esta publicación?')) {
-                sharedData.contentItems = sharedData.contentItems.filter(item => item.id !== postId);
-                saveSharedData(sharedData);
+                localData.contentItems = localData.contentItems.filter(item => item.id !== postId);
+                saveLocalData();
+                saveToFirebase();
                 renderGallery();
                 updateStats();
                 alert('Publicación eliminada');
@@ -1170,15 +1391,18 @@
                 return;
             }
 
-            const post = sharedData.contentItems.find(item => item.id === postId);
+            const post = localData.contentItems.find(item => item.id === postId);
             if (post) {
+                if (!post.comments) post.comments = [];
                 post.comments.push({
                     id: Date.now(),
                     user: currentUser,
                     text: commentText,
                     date: new Date().toLocaleString()
                 });
-                saveSharedData(sharedData);
+                
+                saveLocalData();
+                saveToFirebase();
                 renderGallery();
                 updateStats();
             }
@@ -1191,10 +1415,11 @@
             }
 
             if (confirm('¿Estás seguro de que quieres eliminar este comentario?')) {
-                const post = sharedData.contentItems.find(item => item.id === postId);
+                const post = localData.contentItems.find(item => item.id === postId);
                 if (post) {
                     post.comments = post.comments.filter(comment => comment.id !== commentId);
-                    saveSharedData(sharedData);
+                    saveLocalData();
+                    saveToFirebase();
                     renderGallery();
                     updateStats();
                 }
@@ -1202,7 +1427,7 @@
         }
 
         function shareContent(postId, platform) {
-            const post = sharedData.contentItems.find(item => item.id === postId);
+            const post = localData.contentItems.find(item => item.id === postId);
             if (!post) return;
 
             const shareUrl = window.location.href.split('#')[0] + '#post-' + postId;
@@ -1277,10 +1502,10 @@
             const grid = document.getElementById('contentGrid');
             grid.innerHTML = '';
 
-            let itemsToShow = sharedData.contentItems;
+            let itemsToShow = localData.contentItems;
             
             if (currentCategory !== 'all') {
-                itemsToShow = sharedData.contentItems.filter(item => item.category === currentCategory);
+                itemsToShow = localData.contentItems.filter(item => item.category === currentCategory);
             }
 
             if (itemsToShow.length === 0) {
@@ -1312,9 +1537,9 @@
                 const categoryBadge = '<div class="category-badge">' + item.category + '</div>';
 
                 let commentsHTML = '<div class="comments-section">';
-                commentsHTML += '<strong style="color: #667eea;">💬 Comentarios (' + item.comments.length + ')</strong>';
+                commentsHTML += '<strong style="color: #667eea;">💬 Comentarios (' + (item.comments?.length || 0) + ')</strong>';
                 
-                if (item.comments.length > 0) {
+                if (item.comments && item.comments.length > 0) {
                     item.comments.forEach(comment => {
                         let deleteCommentBtn = '';
                         if (isAdmin) {
