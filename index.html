@@ -645,6 +645,20 @@
             font-weight: bold;
         }
 
+        .forgot-password-link {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .forgot-password-link:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 768px) {
             .character-img {
                 width: 200px;
@@ -726,7 +740,7 @@
                 <h1>⚙️ Configuración de Firebase</h1>
                 
                 <div class="firebase-notice">
-                    <h3>🔋 Instrucciones para configurar Firebase</h3>
+                    <h3>📋 Instrucciones para configurar Firebase</h3>
                     <p><strong>Para que el contenido sea visible para TODOS los usuarios, necesitas configurar Firebase (es GRATIS):</strong></p>
                     
                     <ol>
@@ -879,6 +893,7 @@
         </div>
     </div>
 
+    <!-- Modal de Login -->
     <div class="modal" id="loginModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -895,10 +910,12 @@
                     <input type="password" id="loginPassword" required>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
+                <a class="forgot-password-link" onclick="showForgotPassword()">¿Olvidaste tu contraseña?</a>
             </form>
         </div>
     </div>
 
+    <!-- Modal de Registro -->
     <div class="modal" id="registerModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -919,10 +936,80 @@
                     <input type="email" id="registerEmail" required>
                 </div>
                 <div class="form-group">
+                    <label>Pregunta de seguridad:</label>
+                    <select id="registerSecurityQuestion" required>
+                        <option value="">Selecciona una pregunta...</option>
+                        <option value="¿Cuál es el nombre de tu primera mascota?">¿Cuál es el nombre de tu primera mascota?</option>
+                        <option value="¿En qué ciudad naciste?">¿En qué ciudad naciste?</option>
+                        <option value="¿Cuál es tu comida favorita?">¿Cuál es tu comida favorita?</option>
+                        <option value="¿Cuál es el nombre de tu mejor amigo de la infancia?">¿Cuál es el nombre de tu mejor amigo de la infancia?</option>
+                        <option value="¿Cuál es tu color favorito?">¿Cuál es tu color favorito?</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Respuesta de seguridad:</label>
+                    <input type="text" id="registerSecurityAnswer" required placeholder="Escribe tu respuesta">
+                </div>
+                <div class="form-group">
                     <label>Contraseña:</label>
                     <input type="password" id="registerPassword" required>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Crear Cuenta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Recuperación - Paso 1: Verificar Usuario -->
+    <div class="modal" id="forgotPasswordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Recuperar Contraseña</h2>
+                <button class="close-modal" onclick="closeModal('forgotPasswordModal')">&times;</button>
+            </div>
+            <form id="forgotPasswordForm">
+                <div class="form-group">
+                    <label>Usuario:</label>
+                    <input type="text" id="forgotUser" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Verificar Usuario</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Recuperación - Paso 2: Pregunta de Seguridad -->
+    <div class="modal" id="securityQuestionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Pregunta de Seguridad</h2>
+                <button class="close-modal" onclick="closeModal('securityQuestionModal')">&times;</button>
+            </div>
+            <form id="securityQuestionForm">
+                <div class="form-group">
+                    <label id="securityQuestionLabel"></label>
+                    <input type="text" id="securityAnswer" required placeholder="Escribe tu respuesta">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Verificar Respuesta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Recuperación - Paso 3: Nueva Contraseña -->
+    <div class="modal" id="resetPasswordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nueva Contraseña</h2>
+                <button class="close-modal" onclick="closeModal('resetPasswordModal')">&times;</button>
+            </div>
+            <form id="resetPasswordForm">
+                <div class="form-group">
+                    <label>Nueva contraseña:</label>
+                    <input type="password" id="newPassword" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Confirmar contraseña:</label>
+                    <input type="password" id="confirmPassword" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Cambiar Contraseña</button>
             </form>
         </div>
     </div>
@@ -947,8 +1034,17 @@
         let localData = {
             contentItems: [],
             categories: [],
-            registeredUsers: [{username: ADMIN_USER, password: ADMIN_PASSWORD, name: 'Administrador', email: 'admin@portal.com'}]
+            registeredUsers: [{
+                username: ADMIN_USER, 
+                password: ADMIN_PASSWORD, 
+                name: 'Administrador', 
+                email: 'admin@portal.com',
+                securityQuestion: '¿Cuál es tu color favorito?',
+                securityAnswer: 'azul'
+            }]
         };
+
+        let recoveryUser = null;
 
         function loadLocalData() {
             const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -1015,7 +1111,6 @@
 
         loadLocalData();
         
-        // Esperar a que Firebase esté disponible
         function waitForFirebase() {
             if (typeof firebase !== 'undefined') {
                 loadUserSession();
@@ -1084,6 +1179,8 @@
             const username = document.getElementById('registerUser').value;
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
+            const securityQuestion = document.getElementById('registerSecurityQuestion').value;
+            const securityAnswer = document.getElementById('registerSecurityAnswer').value.toLowerCase().trim();
 
             const existingUser = localData.registeredUsers.find(u => u.username === username);
             if (existingUser) {
@@ -1095,7 +1192,9 @@
                 username: username,
                 password: password,
                 name: name,
-                email: email
+                email: email,
+                securityQuestion: securityQuestion,
+                securityAnswer: securityAnswer
             });
             
             saveLocalData();
@@ -1136,6 +1235,77 @@
 
             renderGallery();
         }
+
+        function showForgotPassword() {
+            closeModal('loginModal');
+            document.getElementById('forgotPasswordModal').classList.add('active');
+        }
+
+        document.getElementById('forgotPasswordForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('forgotUser').value;
+
+            const user = localData.registeredUsers.find(u => u.username === username);
+
+            if (!user) {
+                alert('Usuario no encontrado');
+                return;
+            }
+
+            if (!user.securityQuestion || !user.securityAnswer) {
+                alert('Este usuario no tiene configurada una pregunta de seguridad. Contacta al administrador.');
+                return;
+            }
+
+            recoveryUser = user;
+            document.getElementById('securityQuestionLabel').textContent = user.securityQuestion;
+            closeModal('forgotPasswordModal');
+            document.getElementById('securityQuestionModal').classList.add('active');
+            document.getElementById('forgotPasswordForm').reset();
+        });
+
+        document.getElementById('securityQuestionForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const answer = document.getElementById('securityAnswer').value.toLowerCase().trim();
+
+            if (answer !== recoveryUser.securityAnswer) {
+                alert('Respuesta incorrecta. Intenta nuevamente.');
+                return;
+            }
+
+            closeModal('securityQuestionModal');
+            document.getElementById('resetPasswordModal').classList.add('active');
+            document.getElementById('securityQuestionForm').reset();
+        });
+
+        document.getElementById('resetPasswordForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                alert('Las contraseñas no coinciden');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                alert('La contraseña debe tener al menos 6 caracteres');
+                return;
+            }
+
+            const userIndex = localData.registeredUsers.findIndex(u => u.username === recoveryUser.username);
+            if (userIndex !== -1) {
+                localData.registeredUsers[userIndex].password = newPassword;
+                saveLocalData();
+                saveToFirebase();
+                
+                alert('¡Contraseña cambiada exitosamente! Ahora puedes iniciar sesión.');
+                closeModal('resetPasswordModal');
+                document.getElementById('resetPasswordForm').reset();
+                recoveryUser = null;
+                showLogin();
+            }
+        });
 
         function logout() {
             currentUser = null;
@@ -1567,7 +1737,7 @@
                         updateCategoryFilter();
                         renderGallery();
                         updateStats();
-                        console.log('📥 Datos recibidos de Firebase:', data);
+                        console.log('🔥 Datos recibidos de Firebase:', data);
                     }
                 });
 
