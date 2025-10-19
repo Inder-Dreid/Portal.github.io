@@ -941,6 +941,17 @@
         const CONFIG_KEY = 'firebaseConfig';
         const LOCAL_STORAGE_KEY = 'portalLocalData';
 
+        // Configuración de Firebase predeterminada
+        const defaultFirebaseConfig = {
+            apiKey: "AIzaSyC_PRlHwhr7SXpbz_Zdl1Qpxo1vqVSmuhI",
+            authDomain: "portal-55679.firebaseapp.com",
+            databaseURL: "https://portal-55679-default-rtdb.firebaseio.com",
+            projectId: "portal-55679",
+            storageBucket: "portal-55679.firebasestorage.app",
+            messagingSenderId: "903539413469",
+            appId: "1:903539413469:web:697eed91e1f05ba4662634"
+        };
+
         let currentUser = null;
         let isAdmin = false;
         let currentCategory = 'all';
@@ -965,15 +976,21 @@
         }
 
         function initializeFirebase() {
+            // Guardar configuración predeterminada si no existe
             const savedConfig = localStorage.getItem(CONFIG_KEY);
-            if (!savedConfig) return false;
+            if (!savedConfig) {
+                localStorage.setItem(CONFIG_KEY, JSON.stringify(defaultFirebaseConfig));
+            }
 
             try {
-                const config = JSON.parse(savedConfig);
+                const config = savedConfig ? JSON.parse(savedConfig) : defaultFirebaseConfig;
                 firebase.initializeApp(config);
                 database = firebase.database();
                 firebaseInitialized = true;
                 
+                console.log('✅ Firebase inicializado correctamente');
+                
+                // Escuchar cambios en el contenido
                 database.ref('content').on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
@@ -983,9 +1000,11 @@
                         updateCategoryFilter();
                         renderGallery();
                         updateStats();
+                        console.log('📥 Datos recibidos de Firebase:', data);
                     }
                 });
 
+                // Escuchar cambios en usuarios
                 database.ref('users').on('value', (snapshot) => {
                     const users = snapshot.val();
                     if (users) {
@@ -995,18 +1014,30 @@
 
                 return true;
             } catch (error) {
-                console.error('Error initializing Firebase:', error);
+                console.error('❌ Error inicializando Firebase:', error);
                 return false;
             }
         }
 
         function saveToFirebase() {
             if (firebaseInitialized && database) {
+                console.log('💾 Guardando en Firebase...', {
+                    posts: localData.contentItems.length,
+                    categories: localData.categories.length
+                });
+                
                 database.ref('content').set({
                     contentItems: localData.contentItems,
                     categories: localData.categories
+                }).then(() => {
+                    console.log('✅ Datos guardados en Firebase exitosamente');
+                }).catch((error) => {
+                    console.error('❌ Error guardando en Firebase:', error);
                 });
+                
                 database.ref('users').set(localData.registeredUsers);
+            } else {
+                console.warn('⚠️ Firebase no está inicializado. Datos guardados solo localmente.');
             }
         }
 
@@ -1061,17 +1092,14 @@
         }
 
         function loadFirebaseConfig() {
-            const savedConfig = localStorage.getItem(CONFIG_KEY);
-            if (savedConfig) {
-                const config = JSON.parse(savedConfig);
-                document.getElementById('apiKey').value = config.apiKey || '';
-                document.getElementById('authDomain').value = config.authDomain || '';
-                document.getElementById('databaseURL').value = config.databaseURL || '';
-                document.getElementById('projectId').value = config.projectId || '';
-                document.getElementById('storageBucket').value = config.storageBucket || '';
-                document.getElementById('messagingSenderId').value = config.messagingSenderId || '';
-                document.getElementById('appId').value = config.appId || '';
-            }
+            const config = defaultFirebaseConfig;
+            document.getElementById('apiKey').value = config.apiKey || '';
+            document.getElementById('authDomain').value = config.authDomain || '';
+            document.getElementById('databaseURL').value = config.databaseURL || '';
+            document.getElementById('projectId').value = config.projectId || '';
+            document.getElementById('storageBucket').value = config.storageBucket || '';
+            document.getElementById('messagingSenderId').value = config.messagingSenderId || '';
+            document.getElementById('appId').value = config.appId || '';
         }
 
         loadFirebaseConfig();
