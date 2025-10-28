@@ -214,10 +214,8 @@
             padding: 30px;
             border-radius: 10px;
             width: 90%;
-            max-width: 500px;
+            max-width: 400px;
             animation: modalSlideIn 0.3s ease;
-            max-height: 90vh;
-            overflow-y: auto;
         }
         @keyframes modalSlideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -234,13 +232,6 @@
             justify-content: center;
             color: white;
             font-weight: bold;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
         }
         .hidden { display: none; }
         .admin-badge { background: #ff6b6b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
@@ -403,12 +394,6 @@
             font-weight: bold;
             font-size: 18px;
             flex-shrink: 0;
-            overflow: hidden;
-        }
-        .conversation-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
         }
         .conversation-info { flex: 1; min-width: 0; }
         .conversation-name { font-weight: bold; color: #333; margin-bottom: 3px; }
@@ -490,22 +475,12 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
-            display: none !important;
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1001;
-            visibility: hidden;
-            opacity: 0;
-            pointer-events: none;
-            transform: scale(0);
         }
-        .user-profile-modal.active { 
-            display: flex !important;
-            visibility: visible;
-            opacity: 1;
-            pointer-events: auto;
-            transform: scale(1);
-        }
+        .user-profile-modal.active { display: flex; }
         .user-profile-content {
             background: white;
             border-radius: 15px;
@@ -550,13 +525,6 @@
             color: #667eea;
             font-weight: bold;
             box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            overflow: hidden;
-            border: 3px solid #667eea;
-        }
-        .user-profile-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
         }
         .user-profile-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
         .user-profile-username { font-size: 14px; opacity: 0.9; }
@@ -606,31 +574,6 @@
             text-align: center;
         }
         .empty-chat-icon { font-size: 64px; margin-bottom: 15px; opacity: 0.5; }
-        .profile-picture-area {
-            text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        .profile-picture-preview {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            border: 3px solid #667eea;
-            overflow: hidden;
-        }
-        .profile-picture-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
         @media (max-width: 768px) {
             .character-img { width: 200px; height: 200px; font-size: 100px; }
             .nav-links { width: 100%; justify-content: center; }
@@ -674,7 +617,6 @@
                         <div class="user-avatar" id="userAvatar">U</div>
                         <span id="userName"></span>
                         <span id="adminBadge" class="admin-badge hidden">ADMIN</span>
-                        <button class="btn btn-secondary" onclick="showMyProfile()">Mi Perfil</button>
                         <button class="btn btn-secondary" onclick="logout()">Salir</button>
                     </div>
                 </div>
@@ -708,8 +650,9 @@
                     <div class="form-group">
                         <label>Tipo:</label>
                         <select id="contentType" onchange="updateUploadForm()">
-                            <option value="image">Imagen</option>
-                            <option value="video">Video</option>
+                            <option value="image">Imagen (Archivo)</option>
+                            <option value="video">Video (Archivo - Máx 500MB)</option>
+                            <option value="youtube">Video de YouTube</option>
                             <option value="info">Info</option>
                         </select>
                     </div>
@@ -738,6 +681,16 @@
                     <div id="fileInputArea" class="form-group">
                         <label>Archivo:</label>
                         <input type="file" id="contentFile" accept="image/*,video/*">
+                        <small style="display: block; margin-top: 5px; color: #666;">
+                            Videos: Máximo 500MB. Para videos más largos, usa YouTube.
+                        </small>
+                    </div>
+                    <div id="youtubeInputArea" class="form-group" style="display: none;">
+                        <label>URL de YouTube:</label>
+                        <input type="text" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=...">
+                        <small style="display: block; margin-top: 5px; color: #666;">
+                            Pega el enlace completo del video de YouTube (ideal para videos largos)
+                        </small>
                     </div>
                     <button type="submit" class="btn btn-primary">Publicar</button>
                 </form>
@@ -867,25 +820,6 @@
         </div>
     </div>
 
-    <div class="modal" id="myProfileModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Mi Perfil</h2>
-                <button class="close-modal" onclick="closeMyProfile()">&times;</button>
-            </div>
-            <form id="myProfileForm">
-                <div class="profile-picture-area">
-                    <div class="profile-picture-preview" id="myProfilePicturePreview">👤</div>
-                    <label style="display: block; margin-bottom: 10px; color: #333; font-weight: bold;">
-                        Foto de Perfil:
-                    </label>
-                    <input type="file" id="myProfilePicture" accept="image/*" onchange="previewMyProfilePicture()">
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar Cambios</button>
-            </form>
-        </div>
-    </div>
-
     <button class="chat-button" onclick="toggleChatList()">
         💬
         <span class="notification-badge hidden" id="chatNotification">0</span>
@@ -914,21 +848,24 @@
         </div>
     </div>
 
-    <div class="modal" id="moderatorsModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>Gestionar Moderadores</h2>
-                <button class="close-modal" onclick="closeModeratorsPanel()">&times;</button>
+    <div class="user-profile-modal" id="userProfileModal">
+        <div class="user-profile-content">
+            <div class="user-profile-header">
+                <button class="user-profile-close" onclick="closeUserProfile()">×</button>
+                <div class="user-profile-avatar" id="profileAvatar">U</div>
+                <div class="user-profile-name" id="profileName">Usuario</div>
+                <div class="user-profile-username" id="profileUsername">@usuario</div>
             </div>
-            <div style="max-height: 500px; overflow-y: auto;">
-                <div style="margin-bottom: 30px;">
-                    <h3 style="color: #667eea; margin-bottom: 15px;">Moderadores Actuales 🛡️</h3>
-                    <div id="moderatorsList"></div>
+            <div class="user-profile-body">
+                <div class="user-profile-info">
+                    <div class="user-profile-info-item">
+                        <span>📧</span>
+                        <span id="profileEmail">email@ejemplo.com</span>
+                    </div>
                 </div>
-                <hr style="border: 1px solid #ddd;">
-                <div>
-                    <h3 style="color: #667eea; margin-bottom: 15px;">Promover a Moderador ⬆️</h3>
-                    <div id="usersToPromoteList"></div>
+                <div class="user-profile-actions">
+                    <button class="profile-btn profile-btn-message" onclick="startPrivateChat()">💬 Enviar mensaje</button>
+                    <button class="profile-btn profile-btn-block" id="blockButton" onclick="toggleBlockUser()">🚫 Bloquear</button>
                 </div>
             </div>
         </div>
@@ -936,6 +873,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
     <script>
         const ADMIN_USER = 'Inder';
@@ -945,9 +883,9 @@
 
         let currentUser = null;
         let isAdmin = false;
-        let isModerator = false;
         let currentCategory = 'all';
         let database = null;
+        let storage = null;
         let firebaseInitialized = false;
         let currentChatRecipient = null;
         let selectedUserProfile = null;
@@ -966,9 +904,7 @@
                 name: 'Administrador',
                 email: 'admin@portal.com',
                 securityQuestion: '¿Cuál es tu color favorito?',
-                securityAnswer: 'azul',
-                profilePicture: null,
-                isModerator: false
+                securityAnswer: 'azul'
             }]
         };
 
@@ -1001,8 +937,6 @@
                 const data = JSON.parse(session);
                 currentUser = data.username;
                 isAdmin = data.isAdmin;
-                const user = localData.registeredUsers.find(u => u.username === currentUser);
-                isModerator = user ? user.isModerator : false;
                 restoreLoggedInUI();
                 return true;
             }
@@ -1017,36 +951,14 @@
             localStorage.removeItem(SESSION_KEY);
         }
 
-        function updateUserAvatarDisplay() {
-            const user = localData.registeredUsers.find(u => u.username === currentUser);
-            if (!user) return;
-
-            const avatarEl = document.getElementById('userAvatar');
-            if (user.profilePicture) {
-                avatarEl.innerHTML = '<img src="' + user.profilePicture + '" alt="' + currentUser + '">';
-            } else {
-                avatarEl.textContent = currentUser.charAt(0).toUpperCase();
-            }
-        }
-
         function restoreLoggedInUI() {
             document.getElementById('guest-buttons').classList.add('hidden');
             document.getElementById('user-logged').classList.remove('hidden');
             document.getElementById('userName').textContent = currentUser;
-            updateUserAvatarDisplay();
+            document.getElementById('userAvatar').textContent = currentUser.charAt(0).toUpperCase();
             
-            const user = localData.registeredUsers.find(u => u.username === currentUser);
-            isModerator = user ? user.isModerator : false;
-
-            if (isAdmin || isModerator) {
+            if (isAdmin) {
                 document.getElementById('adminBadge').classList.remove('hidden');
-                if (isAdmin) {
-                    document.getElementById('adminBadge').textContent = 'ADMIN';
-                } else {
-                    document.getElementById('adminBadge').textContent = 'MOD';
-                    document.getElementById('adminBadge').style.background = '#4CAF50';
-                }
-                
                 const uploadLink = document.createElement('a');
                 uploadLink.href = '#';
                 uploadLink.textContent = 'Panel Admin';
@@ -1054,16 +966,6 @@
                 uploadLink.onclick = (e) => { e.preventDefault(); showSection('upload'); };
                 uploadLink.style.cssText = 'color: #333; text-decoration: none; padding: 10px 20px; border-radius: 5px; transition: all 0.3s;';
                 document.querySelector('.nav-links').appendChild(uploadLink);
-                
-                if (isAdmin) {
-                    const moderatorsLink = document.createElement('a');
-                    moderatorsLink.href = '#';
-                    moderatorsLink.textContent = '👥 Moderadores';
-                    moderatorsLink.id = 'moderatorsLink';
-                    moderatorsLink.onclick = (e) => { e.preventDefault(); showModeratorsPanel(); };
-                    moderatorsLink.style.cssText = 'color: #333; text-decoration: none; padding: 10px 20px; border-radius: 5px; transition: all 0.3s;';
-                    document.querySelector('.nav-links').appendChild(moderatorsLink);
-                }
                 updateCategorySelect();
             }
             loadBlockedUsers();
@@ -1084,6 +986,7 @@
             try {
                 firebase.initializeApp(config);
                 database = firebase.database();
+                storage = firebase.storage();
                 firebaseInitialized = true;
 
                 database.ref('content').on('value', (snapshot) => {
@@ -1144,65 +1047,6 @@
             document.getElementById(modalId).classList.remove('active');
         }
 
-        function showMyProfile() {
-            if (!currentUser) {
-                alert('Inicia sesión primero');
-                return;
-            }
-
-            const user = localData.registeredUsers.find(u => u.username === currentUser);
-            if (!user) return;
-
-            const preview = document.getElementById('myProfilePicturePreview');
-            if (user.profilePicture) {
-                preview.innerHTML = '<img src="' + user.profilePicture + '" alt="perfil">';
-            } else {
-                preview.textContent = currentUser.charAt(0).toUpperCase();
-            }
-
-            document.getElementById('myProfileModal').classList.add('active');
-        }
-
-        function closeMyProfile() {
-            document.getElementById('myProfileModal').classList.remove('active');
-        }
-
-        function previewMyProfilePicture() {
-            const file = document.getElementById('myProfilePicture').files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const preview = document.getElementById('myProfilePicturePreview');
-                preview.innerHTML = '<img src="' + e.target.result + '" alt="preview">';
-            };
-            reader.readAsDataURL(file);
-        }
-
-        document.getElementById('myProfileForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const user = localData.registeredUsers.find(u => u.username === currentUser);
-            if (!user) return;
-
-            const file = document.getElementById('myProfilePicture').files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    user.profilePicture = event.target.result;
-                    saveLocalData();
-                    saveToFirebase();
-                    alert('¡Perfil actualizado!');
-                    closeMyProfile();
-                    updateUserAvatarDisplay();
-                    renderGallery();
-                };
-                reader.readAsDataURL(file);
-            } else {
-                alert('Selecciona una foto para tu perfil');
-            }
-        });
-
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const username = document.getElementById('loginUser').value;
@@ -1213,7 +1057,6 @@
                 const adminStatus = (username === ADMIN_USER);
                 currentUser = username;
                 isAdmin = adminStatus;
-                isModerator = user.isModerator || false;
                 saveUserSession(username, adminStatus);
                 restoreLoggedInUI();
                 listenToPrivateMessages();
@@ -1240,7 +1083,7 @@
             }
 
             localData.registeredUsers.push({
-                username, password, name, email, securityQuestion, securityAnswer, profilePicture: null, isModerator: false
+                username, password, name, email, securityQuestion, securityAnswer
             });
 
             saveLocalData();
@@ -1312,7 +1155,6 @@
         function logout() {
             currentUser = null;
             isAdmin = false;
-            isModerator = false;
             clearUserSession();
             document.getElementById('guest-buttons').classList.remove('hidden');
             document.getElementById('user-logged').classList.add('hidden');
@@ -1320,9 +1162,6 @@
             
             const adminLink = document.getElementById('adminLink');
             if (adminLink) adminLink.remove();
-            
-            const moderatorsLink = document.getElementById('moderatorsLink');
-            if (moderatorsLink) moderatorsLink.remove();
             
             if (isListOpen) toggleChatList();
             if (currentChatRecipient) closePrivateChat();
@@ -1371,13 +1210,24 @@
         function updateUploadForm() {
             const type = document.getElementById('contentType').value;
             const fileArea = document.getElementById('fileInputArea');
-            fileArea.style.display = (type === 'info') ? 'none' : 'block';
+            const youtubeArea = document.getElementById('youtubeInputArea');
+            
+            fileArea.style.display = 'none';
+            youtubeArea.style.display = 'none';
+            
+            if (type === 'info') {
+                // No mostrar nada
+            } else if (type === 'youtube') {
+                youtubeArea.style.display = 'block';
+            } else {
+                fileArea.style.display = 'block';
+            }
         }
 
         document.getElementById('uploadForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            if (!isAdmin && !isModerator) {
-                alert('Solo admin y moderadores pueden publicar');
+            if (!isAdmin) {
+                alert('Solo admin puede publicar');
                 return;
             }
 
@@ -1430,6 +1280,33 @@
 
             if (type === 'info') {
                 processContent(null);
+            } else if (type === 'youtube') {
+                const youtubeUrl = document.getElementById('youtubeUrl').value.trim();
+                if (!youtubeUrl) {
+                    alert('Ingresa la URL de YouTube');
+                    return;
+                }
+                
+                // Convertir URL de YouTube a embed
+                let videoId = '';
+                try {
+                    const url = new URL(youtubeUrl);
+                    if (url.hostname.includes('youtube.com')) {
+                        videoId = url.searchParams.get('v');
+                    } else if (url.hostname.includes('youtu.be')) {
+                        videoId = url.pathname.substring(1);
+                    }
+                } catch (e) {
+                    alert('URL de YouTube inválida');
+                    return;
+                }
+                
+                if (!videoId) {
+                    alert('No se pudo extraer el ID del video de YouTube');
+                    return;
+                }
+                
+                processContent('https://www.youtube.com/embed/' + videoId);
             } else if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => processContent(event.target.result);
@@ -1471,8 +1348,6 @@
                     text,
                     date: new Date().toLocaleString()
                 });
-                
-                input.value = '';
                 saveLocalData();
                 saveToFirebase();
                 renderGallery();
@@ -1550,6 +1425,8 @@
                     mediaHTML = '<img src="' + item.url + '" alt="' + item.title + '">';
                 } else if (item.type === 'video') {
                     mediaHTML = '<video src="' + item.url + '" controls></video>';
+                } else if (item.type === 'youtube') {
+                    mediaHTML = '<iframe width="100%" height="200" src="' + item.url + '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
                 } else {
                     mediaHTML = '<div style="height: 200px; background: #667eea; display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">📄</div>';
                 }
@@ -1587,7 +1464,7 @@
                 const shareButtons = '<div class="share-buttons">' +
                     '<button class="btn-share btn-whatsapp" onclick="shareContent(' + item.id + ', \'whatsapp\')">📱 WhatsApp</button>' +
                     '<button class="btn-share btn-facebook" onclick="shareContent(' + item.id + ', \'facebook\')">📘 Facebook</button>' +
-                    '<button class="btn-share btn-twitter" onclick="shareContent(' + item.id + ', \'twitter\')">🦅 Twitter</button>' +
+                    '<button class="btn-share btn-twitter" onclick="shareContent(' + item.id + ', \'twitter\')">🐦 Twitter</button>' +
                     '<button class="btn-share btn-copy" id="copy-btn-' + item.id + '" onclick="shareContent(' + item.id + ', \'copy\')">📋 Copiar</button>' +
                     '</div>';
 
@@ -1601,12 +1478,6 @@
         }
 
         function showUserProfile(username) {
-            if (!currentUser) {
-                alert('Inicia sesión para ver perfiles');
-                showLogin();
-                return;
-            }
-
             if (username === currentUser) {
                 alert('No puedes ver tu propio perfil');
                 return;
@@ -1616,62 +1487,16 @@
             const user = localData.registeredUsers.find(u => u.username === username);
 
             if (!user) {
-                alert('Usuario no encontrado: ' + username);
+                alert('Usuario no encontrado');
                 return;
             }
 
-            // Crear el modal dinámicamente si no existe
-            let profileModal = document.getElementById('userProfileModal');
-            if (!profileModal) {
-                profileModal = document.createElement('div');
-                profileModal.id = 'userProfileModal';
-                profileModal.className = 'user-profile-modal';
-                profileModal.innerHTML = `
-                    <div class="user-profile-content">
-                        <div class="user-profile-header">
-                            <button class="user-profile-close" onclick="closeUserProfile()">×</button>
-                            <div class="user-profile-avatar" id="profileAvatar">U</div>
-                            <div class="user-profile-name" id="profileName">Usuario</div>
-                            <div class="user-profile-username" id="profileUsername">@usuario</div>
-                        </div>
-                        <div class="user-profile-body">
-                            <div class="user-profile-info">
-                                <div class="user-profile-info-item">
-                                    <span>📧</span>
-                                    <span id="profileEmail">email@ejemplo.com</span>
-                                </div>
-                            </div>
-                            <div class="user-profile-actions">
-                                <button class="profile-btn profile-btn-message" onclick="startPrivateChat()">💬 Enviar mensaje</button>
-                                <button class="profile-btn profile-btn-block" id="blockButton" onclick="toggleBlockUser()">🚫 Bloquear</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(profileModal);
-            }
-
-            document.getElementById('profileName').textContent = user.name || username;
+            document.getElementById('profileName').textContent = user.name;
             document.getElementById('profileUsername').textContent = '@' + username;
-            
-            // Solo mostrar email si es admin o si es su propia cuenta
-            const emailElement = document.getElementById('profileEmail');
-            const canSeeEmail = isAdmin || username === currentUser;
-            if (canSeeEmail) {
-                emailElement.textContent = user.email || 'No disponible';
-                emailElement.parentElement.style.display = 'flex';
-            } else {
-                emailElement.parentElement.style.display = 'none';
-            }
+            document.getElementById('profileEmail').textContent = user.email;
+            document.getElementById('profileAvatar').textContent = username.charAt(0).toUpperCase();
 
-            const avatarEl = document.getElementById('profileAvatar');
-            if (user.profilePicture) {
-                avatarEl.innerHTML = '<img src="' + user.profilePicture + '" alt="' + username + '">';
-            } else {
-                avatarEl.textContent = username.charAt(0).toUpperCase();
-            }
-
-            let blockBtn = document.getElementById('blockButton');
+            const blockBtn = document.getElementById('blockButton');
             if (blockedUsers.includes(username)) {
                 blockBtn.textContent = '✅ Desbloquear';
                 blockBtn.className = 'profile-btn profile-btn-unblock';
@@ -1680,202 +1505,24 @@
                 blockBtn.className = 'profile-btn profile-btn-block';
             }
 
-            // Agregar opción de moderador si es admin y el usuario no es admin
-            const userProfileActions = document.querySelector('.user-profile-actions');
-            if (userProfileActions) {
-                let moderatorBtn = userProfileActions.querySelector('[data-mod-btn="true"]');
-                
-                if (isAdmin && username !== ADMIN_USER) {
-                    if (!moderatorBtn) {
-                        moderatorBtn = document.createElement('button');
-                        moderatorBtn.setAttribute('data-mod-btn', 'true');
-                        moderatorBtn.className = 'profile-btn';
-                        userProfileActions.appendChild(moderatorBtn);
-                    }
-                    
-                    if (user.isModerator) {
-                        moderatorBtn.textContent = '👤 Remover Moderador';
-                        moderatorBtn.style.background = '#ff9800';
-                        moderatorBtn.style.color = 'white';
-                        moderatorBtn.onclick = () => {
-                            removeModerator(username);
-                            showUserProfile(username);
-                        };
-                    } else {
-                        moderatorBtn.textContent = '🛡️ Hacer Moderador';
-                        moderatorBtn.style.background = '#2196F3';
-                        moderatorBtn.style.color = 'white';
-                        moderatorBtn.onclick = () => {
-                            makeModerator(username);
-                            showUserProfile(username);
-                        };
-                    }
-                } else if (moderatorBtn) {
-                    moderatorBtn.remove();
-                }
-            }
-
-            // Mostrar el modal agregando la clase active
-            profileModal.classList.add('active');
+            document.getElementById('userProfileModal').classList.add('active');
         }
 
         function closeUserProfile() {
-            const modal = document.getElementById('userProfileModal');
-            if (modal) {
-                modal.classList.remove('active');
-                setTimeout(() => {
-                    modal.remove();
-                }, 300);
-            }
+            document.getElementById('userProfileModal').classList.remove('active');
             selectedUserProfile = null;
         }
 
-        function closeAllModals() {
-            const userProfileModal = document.getElementById('userProfileModal');
-            if (userProfileModal) {
-                userProfileModal.remove();
-            }
-        }
-
         function startPrivateChat() {
-            if (!selectedUserProfile) {
-                alert('No se ha seleccionado ningún usuario');
-                return;
-            }
+            if (!selectedUserProfile) return;
 
             if (blockedUsers.includes(selectedUserProfile)) {
-                alert('Desbloquea primero a este usuario para enviarle mensajes');
-                return;
-            }
-
-            const recipientUser = localData.registeredUsers.find(u => u.username === selectedUserProfile);
-            if (!recipientUser) {
-                alert('El usuario ya no está disponible');
-                closeUserProfile();
+                alert('Desbloquea primero a este usuario');
                 return;
             }
 
             closeUserProfile();
-            
-            if (!isListOpen) {
-                toggleChatList();
-            }
-            
-            setTimeout(() => {
-                openPrivateChat(selectedUserProfile);
-            }, 100);
-        }
-
-        function makeModerator(username) {
-            if (!isAdmin) {
-                alert('Solo el admin puede hacer moderadores');
-                return;
-            }
-
-            const user = localData.registeredUsers.find(u => u.username === username);
-            if (!user) return;
-
-            user.isModerator = true;
-            saveLocalData();
-            saveToFirebase();
-            alert('¡' + username + ' ahora es moderador!');
-        }
-
-        function removeModerator(username) {
-            if (!isAdmin) {
-                alert('Solo el admin puede remover moderadores');
-                return;
-            }
-
-            const user = localData.registeredUsers.find(u => u.username === username);
-            if (!user) return;
-
-            user.isModerator = false;
-            saveLocalData();
-            saveToFirebase();
-            alert('¡' + username + ' ha sido degradado a usuario común!');
-        }
-
-        function showModeratorsPanel() {
-            if (!isAdmin) {
-                alert('Solo el admin puede acceder a este panel');
-                return;
-            }
-
-            const modal = document.getElementById('moderatorsModal');
-            if (modal) {
-                modal.classList.add('active');
-                renderModeratorsPanel();
-            } else {
-                console.error('Modal de moderadores no encontrado');
-            }
-        }
-
-        function closeModeratorsPanel() {
-            const modal = document.getElementById('moderatorsModal');
-            if (modal) {
-                modal.classList.remove('active');
-            }
-        }
-
-        function renderModeratorsPanel() {
-            const moderatorsList = document.getElementById('moderatorsList');
-            const usersToPromoteList = document.getElementById('usersToPromoteList');
-            
-            if (!moderatorsList || !usersToPromoteList) {
-                console.error('Elementos del panel de moderadores no encontrados');
-                return;
-            }
-
-            const moderators = localData.registeredUsers.filter(u => u.isModerator);
-
-            if (moderators.length === 0) {
-                moderatorsList.innerHTML = '<p style="color: #999;">No hay moderadores registrados</p>';
-            } else {
-                moderatorsList.innerHTML = '';
-                moderators.forEach(mod => {
-                    const div = document.createElement('div');
-                    div.style.cssText = 'background: #f0f0f0; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;';
-                    div.innerHTML = `
-                        <div>
-                            <strong>${mod.name}</strong> <br>
-                            <small style="color: #666;">@${mod.username}</small>
-                        </div>
-                        <button class="btn btn-danger" onclick="removeModerator('${mod.username}'); renderModeratorsPanel(); renderUsersToPromote();">Remover</button>
-                    `;
-                    moderatorsList.appendChild(div);
-                });
-            }
-
-            renderUsersToPromote();
-        }
-
-        function renderUsersToPromote() {
-            const usersToPromoteList = document.getElementById('usersToPromoteList');
-            if (!usersToPromoteList) {
-                console.error('Elemento usersToPromoteList no encontrado');
-                return;
-            }
-
-            const nonModerators = localData.registeredUsers.filter(u => !u.isModerator && u.username !== ADMIN_USER);
-
-            if (nonModerators.length === 0) {
-                usersToPromoteList.innerHTML = '<p style="color: #999;">Todos los usuarios son moderadores</p>';
-            } else {
-                usersToPromoteList.innerHTML = '';
-                nonModerators.forEach(user => {
-                    const div = document.createElement('div');
-                    div.style.cssText = 'background: #f9f9f9; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;';
-                    div.innerHTML = `
-                        <div>
-                            <strong>${user.name}</strong> <br>
-                            <small style="color: #666;">@${user.username}</small>
-                        </div>
-                        <button class="btn btn-primary" onclick="makeModerator('${user.username}'); renderModeratorsPanel(); renderUsersToPromote();">Hacer MOD</button>
-                    `;
-                    usersToPromoteList.appendChild(div);
-                });
-            }
+            openPrivateChat(selectedUserProfile);
         }
 
         function toggleBlockUser() {
@@ -1883,12 +1530,12 @@
 
             if (blockedUsers.includes(selectedUserProfile)) {
                 blockedUsers = blockedUsers.filter(u => u !== selectedUserProfile);
-                alert('Usuario ' + selectedUserProfile + ' desbloqueado. Ahora puedes recibir mensajes de este usuario.');
+                alert('Usuario desbloqueado');
                 document.getElementById('blockButton').textContent = '🚫 Bloquear';
                 document.getElementById('blockButton').className = 'profile-btn profile-btn-block';
             } else {
                 blockedUsers.push(selectedUserProfile);
-                alert('Usuario ' + selectedUserProfile + ' bloqueado. No recibirás más mensajes de este usuario.');
+                alert('Usuario bloqueado');
                 document.getElementById('blockButton').textContent = '✅ Desbloquear';
                 document.getElementById('blockButton').className = 'profile-btn profile-btn-unblock';
 
@@ -1964,11 +1611,7 @@
 
                 const avatar = document.createElement('div');
                 avatar.className = 'conversation-avatar';
-                if (user.profilePicture) {
-                    avatar.innerHTML = '<img src="' + user.profilePicture + '" alt="' + user.username + '">';
-                } else {
-                    avatar.textContent = user.username.charAt(0).toUpperCase();
-                }
+                avatar.textContent = user.username.charAt(0).toUpperCase();
 
                 const info = document.createElement('div');
                 info.className = 'conversation-info';
@@ -2229,7 +1872,6 @@
             if (typeof firebase !== 'undefined') {
                 loadUserSession();
                 initializeFirebase();
-                closeAllModals();
             } else {
                 setTimeout(waitForFirebase, 100);
             }
@@ -2240,10 +1882,8 @@
         updateCategoryFilter();
         renderGallery();
         updateStats();
-        closeAllModals();
 
         window.addEventListener('load', () => {
-            closeAllModals();
             const hash = window.location.hash;
             if (hash && hash.startsWith('#post-')) {
                 setTimeout(() => {
