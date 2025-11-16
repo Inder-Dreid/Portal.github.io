@@ -2,9 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -12,8 +10,6 @@
             font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: pan-y;
             overflow-x: hidden;
         }
         #welcome-screen {
@@ -99,7 +95,7 @@
             transition: all 0.3s;
         }
         .nav-links a:hover { background: #667eea; color: white; }
-        .user-info { display: flex; gap: 10px; align-items: center; }
+        .user-info { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .btn {
             padding: 10px 20px;
             border: none;
@@ -113,7 +109,6 @@
         .btn-secondary { background: white; color: #667eea; border: 2px solid #667eea; }
         .btn-secondary:hover { background: #667eea; color: white; }
         .btn-danger { background: #ff6b6b; color: white; padding: 5px 10px; font-size: 12px; }
-        .btn-danger:hover { background: #ff5252; }
         .btn-small { padding: 5px 10px; font-size: 12px; }
         .container {
             max-width: 1200px;
@@ -123,10 +118,49 @@
             border-radius: 10px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
-        .section { display: none; animation: slideIn 0.5s ease; }
+        .section { display: none; }
         .section.active { display: block; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         h1 { color: #667eea; margin-bottom: 20px; }
+        .hidden { display: none !important; }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            overflow: hidden;
+        }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .admin-badge { background: #ff6b6b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { color: #667eea; }
+        .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; }
         .form-group input, .form-group textarea, .form-group select {
@@ -136,27 +170,21 @@
             border-radius: 5px;
             font-size: 14px;
         }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
         .form-group textarea { resize: vertical; min-height: 100px; }
-        .category-selector { display: flex; gap: 10px; align-items: flex-end; }
-        .category-selector > div { flex: 1; }
-        .new-category-input { display: none; margin-top: 10px; }
-        .new-category-input.active { display: block; }
-        .category-filter { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .category-btn {
-            padding: 8px 16px;
-            border: 2px solid #667eea;
-            background: white;
-            color: #667eea;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
+        .stats-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        .category-btn:hover, .category-btn.active { background: #667eea; color: white; }
+        .stat-item { text-align: center; }
+        .stat-number { font-size: 28px; font-weight: bold; }
+        .stat-label { font-size: 14px; opacity: 0.9; }
         .content-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -189,61 +217,27 @@
             z-index: 5;
         }
         .delete-post-btn { position: absolute; top: 10px; right: 10px; z-index: 10; }
+        .category-filter { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .category-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .category-btn:hover, .category-btn.active { background: #667eea; color: white; }
+        .new-category-input { display: none; margin-top: 10px; }
+        .new-category-input.active { display: block; }
         .comments-section { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
         .comment { background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 10px; position: relative; }
         .comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .comment-author { font-weight: bold; color: #667eea; font-size: 13px; }
+        .comment-author { font-weight: bold; color: #667eea; font-size: 13px; cursor: pointer; }
         .comment-text { color: #333; font-size: 13px; }
         .comment-form { margin-top: 10px; display: flex; gap: 5px; }
         .comment-input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-            animation: modalSlideIn 0.3s ease;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        @keyframes modalSlideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-header h2 { color: #667eea; }
-        .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
-        .close-modal:hover { color: #333; }
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #667eea;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .hidden { display: none; }
-        .admin-badge { background: #ff6b6b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
         .share-buttons { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
         .btn-share {
             padding: 6px 12px;
@@ -252,40 +246,12 @@
             cursor: pointer;
             font-size: 12px;
             transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
         }
-        .btn-share:hover { transform: translateY(-2px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
         .btn-whatsapp { background: #25D366; color: white; }
         .btn-facebook { background: #1877F2; color: white; }
         .btn-twitter { background: #1DA1F2; color: white; }
         .btn-copy { background: #6c757d; color: white; }
         .btn-copy.copied { background: #28a745; }
-        .stats-banner {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        .stat-item { text-align: center; }
-        .stat-number { font-size: 28px; font-weight: bold; }
-        .stat-label { font-size: 14px; opacity: 0.9; }
-        .forgot-password-link {
-            display: block;
-            text-align: center;
-            margin-top: 15px;
-            color: #667eea;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-        }
-        .forgot-password-link:hover { text-decoration: underline; }
         .chat-button {
             position: fixed;
             bottom: 30px;
@@ -305,8 +271,8 @@
             align-items: center;
             justify-content: center;
         }
-        .chat-button:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
-        .chat-button .notification-badge {
+        .chat-button:hover { transform: scale(1.1); }
+        .notification-badge {
             position: absolute;
             top: -5px;
             right: -5px;
@@ -320,10 +286,8 @@
             justify-content: center;
             font-size: 12px;
             font-weight: bold;
-            animation: pulse 1s infinite;
         }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-        .chat-list-window {
+        .chat-list-window, .chat-window {
             position: fixed;
             bottom: 100px;
             right: 30px;
@@ -336,26 +300,9 @@
             flex-direction: column;
             z-index: 998;
             overflow: hidden;
-            animation: slideUp 0.3s ease;
         }
-        .chat-list-window.active { display: flex; }
-        .chat-window {
-            position: fixed;
-            bottom: 100px;
-            right: 400px;
-            width: 350px;
-            height: 500px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            display: none;
-            flex-direction: column;
-            z-index: 997;
-            overflow: hidden;
-            animation: slideUp 0.3s ease;
-        }
-        .chat-window.active { display: flex; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-window { right: 400px; z-index: 997; }
+        .chat-list-window.active, .chat-window.active { display: flex; }
         .chat-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -371,12 +318,6 @@
             color: white;
             font-size: 24px;
             cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         .chat-conversations-list { flex: 1; overflow-y: auto; background: #f8f9fa; }
         .conversation-item {
@@ -402,14 +343,9 @@
             color: white;
             font-weight: bold;
             font-size: 18px;
-            flex-shrink: 0;
             overflow: hidden;
         }
-        .conversation-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .conversation-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .conversation-info { flex: 1; min-width: 0; }
         .conversation-name { font-weight: bold; color: #333; margin-bottom: 3px; }
         .conversation-preview {
@@ -436,8 +372,7 @@
             font-weight: bold;
         }
         .chat-messages { flex: 1; overflow-y: auto; padding: 15px; background: #f8f9fa; }
-        .chat-message { margin-bottom: 15px; animation: messageSlideIn 0.3s ease; }
-        @keyframes messageSlideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        .chat-message { margin-bottom: 15px; }
         .chat-message.own { text-align: right; }
         .chat-message .message-author { font-size: 12px; color: #667eea; font-weight: bold; margin-bottom: 3px; }
         .chat-message.own .message-author { color: #764ba2; }
@@ -467,7 +402,6 @@
             font-size: 14px;
             outline: none;
         }
-        .chat-input:focus { border-color: #667eea; }
         .chat-send {
             width: 45px;
             height: 45px;
@@ -478,11 +412,7 @@
             font-size: 20px;
             cursor: pointer;
             transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
-        .chat-send:hover { transform: scale(1.1); }
         .user-profile-modal {
             position: fixed;
             top: 0;
@@ -490,29 +420,18 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
-            display: none !important;
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1001;
-            visibility: hidden;
-            opacity: 0;
-            pointer-events: none;
-            transform: scale(0);
         }
-        .user-profile-modal.active { 
-            display: flex !important;
-            visibility: visible;
-            opacity: 1;
-            pointer-events: auto;
-            transform: scale(1);
-        }
+        .user-profile-modal.active { display: flex; }
         .user-profile-content {
             background: white;
             border-radius: 15px;
             width: 90%;
             max-width: 400px;
             overflow: hidden;
-            animation: modalSlideIn 0.3s ease;
         }
         .user-profile-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -533,9 +452,6 @@
             width: 35px;
             height: 35px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         .user-profile-avatar {
             width: 100px;
@@ -551,26 +467,11 @@
             font-weight: bold;
             box-shadow: 0 5px 20px rgba(0,0,0,0.2);
             overflow: hidden;
-            border: 3px solid #667eea;
         }
-        .user-profile-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .user-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .user-profile-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
         .user-profile-username { font-size: 14px; opacity: 0.9; }
         .user-profile-body { padding: 25px; }
-        .user-profile-info { margin-bottom: 20px; }
-        .user-profile-info-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-            color: #666;
-            font-size: 14px;
-        }
         .user-profile-actions { display: flex; gap: 10px; flex-direction: column; }
         .profile-btn {
             padding: 12px 20px;
@@ -580,21 +481,10 @@
             font-size: 14px;
             font-weight: bold;
             transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
         .profile-btn-message { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        .profile-btn-message:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
         .profile-btn-block { background: #ff6b6b; color: white; }
-        .profile-btn-block:hover { background: #ff5252; }
         .profile-btn-unblock { background: #28a745; color: white; }
-        .profile-btn-unblock:hover { background: #218838; }
-        .username-link { color: #667eea; cursor: pointer; font-weight: bold; transition: all 0.3s; }
-        .username-link:hover { color: #764ba2; text-decoration: underline; }
-        .no-conversations { padding: 40px 20px; text-align: center; color: #999; }
-        .no-conversations p { margin-bottom: 10px; }
         .empty-chat {
             display: flex;
             flex-direction: column;
@@ -606,43 +496,28 @@
             text-align: center;
         }
         .empty-chat-icon { font-size: 64px; margin-bottom: 15px; opacity: 0.5; }
-        .profile-picture-area {
-            text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        .profile-picture-preview {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            background: white;
+        .mod-user-card {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            border: 3px solid #667eea;
-            overflow: hidden;
+            margin-bottom: 10px;
         }
-        .profile-picture-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        .mod-user-card.promote {
+            background: #f9f9f9;
         }
         @media (max-width: 768px) {
-            .character-img { width: 200px; height: 200px; font-size: 100px; }
-            .nav-links { width: 100%; justify-content: center; }
-            .container { padding: 15px; }
-            .content-grid { grid-template-columns: 1fr; gap: 15px; }
-            .modal-content { width: 95%; padding: 20px; }
-            .form-group input, .form-group textarea, .form-group select { font-size: 16px; }
-            .comment-input { font-size: 16px; }
-            .category-selector { flex-direction: column; }
-            .chat-list-window { bottom: 90px; right: 10px; left: 10px; width: auto; height: 450px; }
-            .chat-window { bottom: 90px; right: 10px; left: 10px; width: auto; height: 450px; }
-            .chat-button { bottom: 20px; right: 20px; }
+            .chat-list-window, .chat-window { 
+                bottom: 90px; 
+                right: 10px; 
+                left: 10px; 
+                width: auto; 
+                height: 450px; 
+            }
+            .chat-window { right: 10px; }
+            .content-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -652,7 +527,7 @@
             <div class="character-img">🌸</div>
             <div class="speech-bubble">
                 <h2>¡Hello World! 👋</h2>
-                <p>Bienvenido al portal. ¡Disfruta tu estancia!</p>
+                <p>Bienvenido al portal</p>
             </div>
         </div>
     </div>
@@ -661,9 +536,9 @@
         <header>
             <nav>
                 <div class="logo">🌸 Portal</div>
-                <div class="nav-links">
-                    <a href="#" onclick="event.preventDefault(); showSection('home');">Inicio</a>
-                    <a href="#" onclick="event.preventDefault(); showSection('gallery');">Galería</a>
+                <div class="nav-links" id="navLinks">
+                    <a href="#" onclick="showSection('home'); return false;">Inicio</a>
+                    <a href="#" onclick="showSection('gallery'); return false;">Galería</a>
                 </div>
                 <div class="user-info">
                     <div id="guest-buttons">
@@ -674,7 +549,6 @@
                         <div class="user-avatar" id="userAvatar">U</div>
                         <span id="userName"></span>
                         <span id="adminBadge" class="admin-badge hidden">ADMIN</span>
-                        <button class="btn btn-secondary" onclick="showMyProfile()">Mi Perfil</button>
                         <button class="btn btn-secondary" onclick="logout()">Salir</button>
                     </div>
                 </div>
@@ -698,8 +572,8 @@
                         <div class="stat-label">Comentarios</div>
                     </div>
                 </div>
-                <p>Este es un espacio para disfrutar y compartir contenido.</p>
-                <p><strong>Regístrate</strong> para poder dejar comentarios y chatear con otros usuarios.</p>
+                <p>Este es un espacio para compartir contenido.</p>
+                <p><strong>Regístrate</strong> para comentar y chatear.</p>
             </section>
 
             <section id="upload" class="section">
@@ -723,14 +597,10 @@
                     </div>
                     <div class="form-group">
                         <label>Categoría:</label>
-                        <div class="category-selector">
-                            <div>
-                                <select id="categorySelect" onchange="toggleNewCategory()">
-                                    <option value="">Seleccionar...</option>
-                                    <option value="nueva">➕ Nueva categoría</option>
-                                </select>
-                            </div>
-                        </div>
+                        <select id="categorySelect" onchange="toggleNewCategory()">
+                            <option value="">Seleccionar...</option>
+                            <option value="nueva">➕ Nueva categoría</option>
+                        </select>
                         <div class="new-category-input" id="newCategoryInput">
                             <input type="text" id="newCategoryName" placeholder="Nombre de la categoría">
                         </div>
@@ -749,6 +619,19 @@
                     <button class="category-btn active" onclick="filterByCategory('all')">📂 Todas</button>
                 </div>
                 <div class="content-grid" id="contentGrid"></div>
+            </section>
+
+            <section id="moderators" class="section">
+                <h1>Gestionar Moderadores 👥</h1>
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Moderadores Actuales 🛡️</h3>
+                    <div id="moderatorsList"></div>
+                </div>
+                <hr style="border: 1px solid #ddd; margin: 30px 0;">
+                <div>
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Promover a Moderador ⬆️</h3>
+                    <div id="usersToPromoteList"></div>
+                </div>
             </section>
         </div>
     </div>
@@ -769,7 +652,6 @@
                     <input type="password" id="loginPassword" required>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
-                <a class="forgot-password-link" onclick="showForgotPassword()">¿Olvidaste tu contraseña?</a>
             </form>
         </div>
     </div>
@@ -794,94 +676,10 @@
                     <input type="email" id="registerEmail" required>
                 </div>
                 <div class="form-group">
-                    <label>Pregunta de seguridad:</label>
-                    <select id="registerSecurityQuestion" required>
-                        <option value="">Selecciona...</option>
-                        <option value="¿Cuál es el nombre de tu primera mascota?">¿Mascota?</option>
-                        <option value="¿En qué ciudad naciste?">¿Ciudad natal?</option>
-                        <option value="¿Cuál es tu color favorito?">¿Color favorito?</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Respuesta:</label>
-                    <input type="text" id="registerSecurityAnswer" required>
-                </div>
-                <div class="form-group">
                     <label>Contraseña:</label>
                     <input type="password" id="registerPassword" required>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Crear Cuenta</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal" id="forgotPasswordModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Recuperar Contraseña</h2>
-                <button class="close-modal" onclick="closeModal('forgotPasswordModal')">&times;</button>
-            </div>
-            <form id="forgotPasswordForm">
-                <div class="form-group">
-                    <label>Usuario:</label>
-                    <input type="text" id="forgotUser" required>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Verificar</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal" id="securityQuestionModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Pregunta de Seguridad</h2>
-                <button class="close-modal" onclick="closeModal('securityQuestionModal')">&times;</button>
-            </div>
-            <form id="securityQuestionForm">
-                <div class="form-group">
-                    <label id="securityQuestionLabel"></label>
-                    <input type="text" id="securityAnswer" required>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Verificar</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal" id="resetPasswordModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Nueva Contraseña</h2>
-                <button class="close-modal" onclick="closeModal('resetPasswordModal')">&times;</button>
-            </div>
-            <form id="resetPasswordForm">
-                <div class="form-group">
-                    <label>Nueva contraseña:</label>
-                    <input type="password" id="newPassword" required minlength="6">
-                </div>
-                <div class="form-group">
-                    <label>Confirmar:</label>
-                    <input type="password" id="confirmPassword" required minlength="6">
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Cambiar</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal" id="myProfileModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Mi Perfil</h2>
-                <button class="close-modal" onclick="closeMyProfile()">&times;</button>
-            </div>
-            <form id="myProfileForm">
-                <div class="profile-picture-area">
-                    <div class="profile-picture-preview" id="myProfilePicturePreview">👤</div>
-                    <label style="display: block; margin-bottom: 10px; color: #333; font-weight: bold;">
-                        Foto de Perfil:
-                    </label>
-                    <input type="file" id="myProfilePicture" accept="image/*" onchange="previewMyProfilePicture()">
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar Cambios</button>
             </form>
         </div>
     </div>
@@ -909,28 +707,8 @@
         </div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-area">
-            <input type="text" class="chat-input" id="chatInput" placeholder="Escribe..." onkeypress="handleChatKeyPress(event)">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Escribe..." onkeypress="if(event.key==='Enter') sendPrivateMessage()">
             <button class="chat-send" onclick="sendPrivateMessage()">📤</button>
-        </div>
-    </div>
-
-    <div class="modal" id="moderatorsModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>Gestionar Moderadores</h2>
-                <button class="close-modal" onclick="closeModeratorsPanel()">&times;</button>
-            </div>
-            <div style="max-height: 500px; overflow-y: auto;">
-                <div style="margin-bottom: 30px;">
-                    <h3 style="color: #667eea; margin-bottom: 15px;">Moderadores Actuales 🛡️</h3>
-                    <div id="moderatorsList"></div>
-                </div>
-                <hr style="border: 1px solid #ddd;">
-                <div>
-                    <h3 style="color: #667eea; margin-bottom: 15px;">Promover a Moderador ⬆️</h3>
-                    <div id="usersToPromoteList"></div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -940,9 +718,6 @@
     <script>
         const ADMIN_USER = 'Inder';
         const ADMIN_PASSWORD = 'admin123';
-        const LOCAL_STORAGE_KEY = 'portalLocalData';
-        const SESSION_KEY = 'portalUserSession';
-
         let currentUser = null;
         let isAdmin = false;
         let isModerator = false;
@@ -955,7 +730,6 @@
         let blockedUsers = [];
         let unreadMessages = 0;
         let isListOpen = false;
-        let recoveryUser = null;
 
         let localData = {
             contentItems: [],
@@ -965,124 +739,86 @@
                 password: ADMIN_PASSWORD,
                 name: 'Administrador',
                 email: 'admin@portal.com',
-                securityQuestion: '¿Cuál es tu color favorito?',
-                securityAnswer: 'azul',
-                profilePicture: null,
                 isModerator: false
             }]
         };
 
+        function isStaff(username) {
+            if (username === ADMIN_USER) return true;
+            const user = localData.registeredUsers.find(u => u.username === username);
+            return user && user.isModerator;
+        }
+
         function loadLocalData() {
-            const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+            const saved = localStorage.getItem('portalData');
             if (saved) localData = JSON.parse(saved);
-            loadBlockedUsers();
         }
 
         function saveLocalData() {
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localData));
-        }
-
-        function loadBlockedUsers() {
-            if (currentUser) {
-                const saved = localStorage.getItem('blockedUsers_' + currentUser);
-                if (saved) blockedUsers = JSON.parse(saved);
-            }
-        }
-
-        function saveBlockedUsers() {
-            if (currentUser) {
-                localStorage.setItem('blockedUsers_' + currentUser, JSON.stringify(blockedUsers));
-            }
+            localStorage.setItem('portalData', JSON.stringify(localData));
         }
 
         function loadUserSession() {
-            const session = localStorage.getItem(SESSION_KEY);
+            const session = localStorage.getItem('userSession');
             if (session) {
                 const data = JSON.parse(session);
                 currentUser = data.username;
                 isAdmin = data.isAdmin;
                 const user = localData.registeredUsers.find(u => u.username === currentUser);
                 isModerator = user ? user.isModerator : false;
-                restoreLoggedInUI();
+                restoreUI();
                 return true;
             }
             return false;
         }
 
         function saveUserSession(username, adminStatus) {
-            localStorage.setItem(SESSION_KEY, JSON.stringify({ username, isAdmin: adminStatus }));
+            localStorage.setItem('userSession', JSON.stringify({ username, isAdmin: adminStatus }));
         }
 
-        function clearUserSession() {
-            localStorage.removeItem(SESSION_KEY);
-        }
-
-        function updateUserAvatarDisplay() {
-            const user = localData.registeredUsers.find(u => u.username === currentUser);
-            if (!user) return;
-
-            const avatarEl = document.getElementById('userAvatar');
-            if (user.profilePicture) {
-                avatarEl.innerHTML = '<img src="' + user.profilePicture + '" alt="' + currentUser + '">';
-            } else {
-                avatarEl.textContent = currentUser.charAt(0).toUpperCase();
-            }
-        }
-
-        function restoreLoggedInUI() {
+        function restoreUI() {
             document.getElementById('guest-buttons').classList.add('hidden');
             document.getElementById('user-logged').classList.remove('hidden');
             document.getElementById('userName').textContent = currentUser;
-            updateUserAvatarDisplay();
+            document.getElementById('userAvatar').textContent = currentUser.charAt(0).toUpperCase();
             
-            const user = localData.registeredUsers.find(u => u.username === currentUser);
-            isModerator = user ? user.isModerator : false;
-
             if (isAdmin || isModerator) {
                 document.getElementById('adminBadge').classList.remove('hidden');
-                if (isAdmin) {
-                    document.getElementById('adminBadge').textContent = 'ADMIN';
-                } else {
-                    document.getElementById('adminBadge').textContent = 'MOD';
-                    document.getElementById('adminBadge').style.background = '#4CAF50';
-                }
+                document.getElementById('adminBadge').textContent = isAdmin ? 'ADMIN' : 'MOD';
+                document.getElementById('adminBadge').style.background = isAdmin ? '#ff6b6b' : '#4CAF50';
                 
                 const uploadLink = document.createElement('a');
                 uploadLink.href = '#';
                 uploadLink.textContent = 'Panel Admin';
                 uploadLink.id = 'adminLink';
                 uploadLink.onclick = (e) => { e.preventDefault(); showSection('upload'); };
-                uploadLink.style.cssText = 'color: #333; text-decoration: none; padding: 10px 20px; border-radius: 5px; transition: all 0.3s;';
-                document.querySelector('.nav-links').appendChild(uploadLink);
+                document.querySelector('#navLinks').appendChild(uploadLink);
                 
                 if (isAdmin) {
                     const moderatorsLink = document.createElement('a');
                     moderatorsLink.href = '#';
                     moderatorsLink.textContent = '👥 Moderadores';
                     moderatorsLink.id = 'moderatorsLink';
-                    moderatorsLink.onclick = (e) => { e.preventDefault(); showModeratorsPanel(); };
-                    moderatorsLink.style.cssText = 'color: #333; text-decoration: none; padding: 10px 20px; border-radius: 5px; transition: all 0.3s;';
-                    document.querySelector('.nav-links').appendChild(moderatorsLink);
+                    moderatorsLink.onclick = (e) => { e.preventDefault(); showSection('moderators'); renderModeratorsPanel(); };
+                    document.querySelector('#navLinks').appendChild(moderatorsLink);
                 }
+                
                 updateCategorySelect();
             }
-            loadBlockedUsers();
             renderGallery();
         }
 
-        function initializeFirebase() {
-            const config = {
-                apiKey: "AIzaSyC_PRlHwhr7SXpbz_Zdl1Qpxo1vqVSmuhI",
-                authDomain: "portal-55679.firebaseapp.com",
-                databaseURL: "https://portal-55679-default-rtdb.firebaseio.com",
-                projectId: "portal-55679",
-                storageBucket: "portal-55679.firebasestorage.app",
-                messagingSenderId: "903539413469",
-                appId: "1:903539413469:web:697eed91e1f05ba4662634"
-            };
-
+        function initFirebase() {
             try {
-                firebase.initializeApp(config);
+                firebase.initializeApp({
+                    apiKey: "AIzaSyC_PRlHwhr7SXpbz_Zdl1Qpxo1vqVSmuhI",
+                    authDomain: "portal-55679.firebaseapp.com",
+                    databaseURL: "https://portal-55679-default-rtdb.firebaseio.com",
+                    projectId: "portal-55679",
+                    storageBucket: "portal-55679.firebasestorage.app",
+                    messagingSenderId: "903539413469",
+                    appId: "1:903539413469:web:697eed91e1f05ba4662634"
+                });
                 database = firebase.database();
                 firebaseInitialized = true;
 
@@ -1103,9 +839,9 @@
                     if (users) localData.registeredUsers = users;
                 });
 
-                listenToPrivateMessages();
+                listenToMessages();
             } catch (error) {
-                console.error('Error Firebase:', error);
+                console.error('Firebase error:', error);
             }
         }
 
@@ -1144,65 +880,6 @@
             document.getElementById(modalId).classList.remove('active');
         }
 
-        function showMyProfile() {
-            if (!currentUser) {
-                alert('Inicia sesión primero');
-                return;
-            }
-
-            const user = localData.registeredUsers.find(u => u.username === currentUser);
-            if (!user) return;
-
-            const preview = document.getElementById('myProfilePicturePreview');
-            if (user.profilePicture) {
-                preview.innerHTML = '<img src="' + user.profilePicture + '" alt="perfil">';
-            } else {
-                preview.textContent = currentUser.charAt(0).toUpperCase();
-            }
-
-            document.getElementById('myProfileModal').classList.add('active');
-        }
-
-        function closeMyProfile() {
-            document.getElementById('myProfileModal').classList.remove('active');
-        }
-
-        function previewMyProfilePicture() {
-            const file = document.getElementById('myProfilePicture').files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const preview = document.getElementById('myProfilePicturePreview');
-                preview.innerHTML = '<img src="' + e.target.result + '" alt="preview">';
-            };
-            reader.readAsDataURL(file);
-        }
-
-        document.getElementById('myProfileForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const user = localData.registeredUsers.find(u => u.username === currentUser);
-            if (!user) return;
-
-            const file = document.getElementById('myProfilePicture').files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    user.profilePicture = event.target.result;
-                    saveLocalData();
-                    saveToFirebase();
-                    alert('¡Perfil actualizado!');
-                    closeMyProfile();
-                    updateUserAvatarDisplay();
-                    renderGallery();
-                };
-                reader.readAsDataURL(file);
-            } else {
-                alert('Selecciona una foto para tu perfil');
-            }
-        });
-
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const username = document.getElementById('loginUser').value;
@@ -1215,10 +892,9 @@
                 isAdmin = adminStatus;
                 isModerator = user.isModerator || false;
                 saveUserSession(username, adminStatus);
-                restoreLoggedInUI();
-                listenToPrivateMessages();
-                alert('¡Bienvenido ' + user.name + '!');
-                document.getElementById('loginForm').reset();
+                restoreUI();
+                listenToMessages();
+                alert('¡Bienvenido!');
                 closeModal('loginModal');
             } else {
                 alert('Usuario o contraseña incorrectos');
@@ -1231,18 +907,13 @@
             const username = document.getElementById('registerUser').value;
             const email = document.getElementById('registerEmail').value;
             const password = document.getElementById('registerPassword').value;
-            const securityQuestion = document.getElementById('registerSecurityQuestion').value;
-            const securityAnswer = document.getElementById('registerSecurityAnswer').value.toLowerCase().trim();
 
             if (localData.registeredUsers.find(u => u.username === username)) {
                 alert('Usuario ya existe');
                 return;
             }
 
-            localData.registeredUsers.push({
-                username, password, name, email, securityQuestion, securityAnswer, profilePicture: null, isModerator: false
-            });
-
+            localData.registeredUsers.push({ username, password, name, email, isModerator: false });
             saveLocalData();
             saveToFirebase();
             alert('¡Cuenta creada!');
@@ -1250,70 +921,11 @@
             closeModal('registerModal');
         });
 
-        function showForgotPassword() {
-            closeModal('loginModal');
-            document.getElementById('forgotPasswordModal').classList.add('active');
-        }
-
-        document.getElementById('forgotPasswordForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const username = document.getElementById('forgotUser').value;
-            const user = localData.registeredUsers.find(u => u.username === username);
-
-            if (!user || !user.securityQuestion) {
-                alert('Usuario no encontrado o sin pregunta de seguridad');
-                return;
-            }
-
-            recoveryUser = user;
-            document.getElementById('securityQuestionLabel').textContent = user.securityQuestion;
-            closeModal('forgotPasswordModal');
-            document.getElementById('securityQuestionModal').classList.add('active');
-            document.getElementById('forgotPasswordForm').reset();
-        });
-
-        document.getElementById('securityQuestionForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const answer = document.getElementById('securityAnswer').value.toLowerCase().trim();
-
-            if (answer !== recoveryUser.securityAnswer) {
-                alert('Respuesta incorrecta');
-                return;
-            }
-
-            closeModal('securityQuestionModal');
-            document.getElementById('resetPasswordModal').classList.add('active');
-            document.getElementById('securityQuestionForm').reset();
-        });
-
-        document.getElementById('resetPasswordForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            if (newPassword !== confirmPassword) {
-                alert('Las contraseñas no coinciden');
-                return;
-            }
-
-            const userIndex = localData.registeredUsers.findIndex(u => u.username === recoveryUser.username);
-            if (userIndex !== -1) {
-                localData.registeredUsers[userIndex].password = newPassword;
-                saveLocalData();
-                saveToFirebase();
-                alert('¡Contraseña cambiada!');
-                closeModal('resetPasswordModal');
-                document.getElementById('resetPasswordForm').reset();
-                recoveryUser = null;
-                showLogin();
-            }
-        });
-
         function logout() {
             currentUser = null;
             isAdmin = false;
             isModerator = false;
-            clearUserSession();
+            localStorage.removeItem('userSession');
             document.getElementById('guest-buttons').classList.remove('hidden');
             document.getElementById('user-logged').classList.add('hidden');
             document.getElementById('adminBadge').classList.add('hidden');
@@ -1329,6 +941,85 @@
             
             showSection('home');
             renderGallery();
+        }
+
+        function makeModerator(username) {
+            if (!isAdmin) {
+                alert('Solo el admin puede hacer moderadores');
+                return;
+            }
+
+            const user = localData.registeredUsers.find(u => u.username === username);
+            if (!user) return;
+
+            user.isModerator = true;
+            saveLocalData();
+            saveToFirebase();
+            alert('¡' + username + ' ahora es moderador!');
+            renderModeratorsPanel();
+        }
+
+        function removeModerator(username) {
+            if (!isAdmin) {
+                alert('Solo el admin puede remover moderadores');
+                return;
+            }
+
+            const user = localData.registeredUsers.find(u => u.username === username);
+            if (!user) return;
+
+            user.isModerator = false;
+            saveLocalData();
+            saveToFirebase();
+            alert('¡' + username + ' ya no es moderador!');
+            renderModeratorsPanel();
+        }
+
+        function renderModeratorsPanel() {
+            const moderatorsList = document.getElementById('moderatorsList');
+            const usersToPromoteList = document.getElementById('usersToPromoteList');
+            
+            if (!moderatorsList || !usersToPromoteList) return;
+
+            const moderators = localData.registeredUsers.filter(u => u.isModerator);
+
+            if (moderators.length === 0) {
+                moderatorsList.innerHTML = '<p style="color: #999;">No hay moderadores registrados</p>';
+            } else {
+                moderatorsList.innerHTML = '';
+                moderators.forEach(mod => {
+                    const div = document.createElement('div');
+                    div.className = 'mod-user-card';
+                    div.innerHTML = `
+                        <div>
+                            <strong>${mod.name}</strong> <br>
+                            <small style="color: #666;">@${mod.username}</small>
+                        </div>
+                        <button class="btn btn-danger" onclick="removeModerator('${mod.username}')">Remover</button>
+                    `;
+                    moderatorsList.appendChild(div);
+                });
+            }
+
+            const nonModerators = localData.registeredUsers.filter(u => !u.isModerator && u.username !== ADMIN_USER);
+
+            if (nonModerators.length === 0) {
+                usersToPromoteList.innerHTML = '<p style="color: #999;">Todos los usuarios son moderadores</p>';
+            } else {
+                usersToPromoteList.innerHTML = '';
+                nonModerators.forEach(user => {
+                    const div = document.createElement('div');
+                    div.className = 'mod-user-card promote';
+                    div.innerHTML = `
+                        <div>
+                            <strong>${user.name}</strong> <br>
+                            <small style="color: #666;">@${user.username}</small>
+                        </div>
+                        <button class="btn btn-primary" onclick="makeModerator('${user.username}')">Hacer MOD</button>
+                    `;
+                    usersToPromoteList.appendChild(div);
+                });
+            }
         }
 
         function toggleNewCategory() {
@@ -1431,6 +1122,12 @@
             if (type === 'info') {
                 processContent(null);
             } else if (file) {
+                const maxSize = type === 'video' ? 5 * 1024 * 1024 : 3 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    alert('El archivo es muy grande. Máximo ' + (type === 'video' ? '5MB' : '3MB'));
+                    return;
+                }
+                
                 const reader = new FileReader();
                 reader.onload = (event) => processContent(event.target.result);
                 reader.readAsDataURL(file);
@@ -1565,7 +1262,7 @@
                         let deleteCommentBtn = isAdmin ? '<button class="btn btn-danger btn-small" onclick="deleteComment(' + item.id + ',' + comment.id + ')">🗑️</button>' : '';
                         commentsHTML += '<div class="comment">';
                         commentsHTML += '<div class="comment-header">';
-                        commentsHTML += '<span class="comment-author username-link" onclick="showUserProfile(\'' + comment.user + '\')">' + comment.user + '</span>';
+                        commentsHTML += '<span class="comment-author" onclick="showUserProfile(\'' + comment.user + '\')">' + comment.user + '</span>';
                         commentsHTML += deleteCommentBtn;
                         commentsHTML += '</div>';
                         commentsHTML += '<p class="comment-text">' + comment.text + '</p>';
@@ -1616,11 +1313,10 @@
             const user = localData.registeredUsers.find(u => u.username === username);
 
             if (!user) {
-                alert('Usuario no encontrado: ' + username);
+                alert('Usuario no encontrado');
                 return;
             }
 
-            // Crear el modal dinámicamente si no existe
             let profileModal = document.getElementById('userProfileModal');
             if (!profileModal) {
                 profileModal = document.createElement('div');
@@ -1635,15 +1331,9 @@
                             <div class="user-profile-username" id="profileUsername">@usuario</div>
                         </div>
                         <div class="user-profile-body">
-                            <div class="user-profile-info">
-                                <div class="user-profile-info-item">
-                                    <span>📧</span>
-                                    <span id="profileEmail">email@ejemplo.com</span>
-                                </div>
-                            </div>
                             <div class="user-profile-actions">
                                 <button class="profile-btn profile-btn-message" onclick="startPrivateChat()">💬 Enviar mensaje</button>
-                                <button class="profile-btn profile-btn-block" id="blockButton" onclick="toggleBlockUser()">🚫 Bloquear</button>
+                                <button class="profile-btn profile-btn-block" id="blockButton" onclick="toggleBlock()">🚫 Bloquear</button>
                             </div>
                         </div>
                     </div>
@@ -1653,23 +1343,7 @@
 
             document.getElementById('profileName').textContent = user.name || username;
             document.getElementById('profileUsername').textContent = '@' + username;
-            
-            // Solo mostrar email si es admin o si es su propia cuenta
-            const emailElement = document.getElementById('profileEmail');
-            const canSeeEmail = isAdmin || username === currentUser;
-            if (canSeeEmail) {
-                emailElement.textContent = user.email || 'No disponible';
-                emailElement.parentElement.style.display = 'flex';
-            } else {
-                emailElement.parentElement.style.display = 'none';
-            }
-
-            const avatarEl = document.getElementById('profileAvatar');
-            if (user.profilePicture) {
-                avatarEl.innerHTML = '<img src="' + user.profilePicture + '" alt="' + username + '">';
-            } else {
-                avatarEl.textContent = username.charAt(0).toUpperCase();
-            }
+            document.getElementById('profileAvatar').textContent = username.charAt(0).toUpperCase();
 
             let blockBtn = document.getElementById('blockButton');
             if (blockedUsers.includes(username)) {
@@ -1680,7 +1354,6 @@
                 blockBtn.className = 'profile-btn profile-btn-block';
             }
 
-            // Agregar opción de moderador si es admin y el usuario no es admin
             const userProfileActions = document.querySelector('.user-profile-actions');
             if (userProfileActions) {
                 let moderatorBtn = userProfileActions.querySelector('[data-mod-btn="true"]');
@@ -1699,7 +1372,7 @@
                         moderatorBtn.style.color = 'white';
                         moderatorBtn.onclick = () => {
                             removeModerator(username);
-                            showUserProfile(username);
+                            closeUserProfile();
                         };
                     } else {
                         moderatorBtn.textContent = '🛡️ Hacer Moderador';
@@ -1707,7 +1380,7 @@
                         moderatorBtn.style.color = 'white';
                         moderatorBtn.onclick = () => {
                             makeModerator(username);
-                            showUserProfile(username);
+                            closeUserProfile();
                         };
                     }
                 } else if (moderatorBtn) {
@@ -1715,7 +1388,6 @@
                 }
             }
 
-            // Mostrar el modal agregando la clase active
             profileModal.classList.add('active');
         }
 
@@ -1723,35 +1395,37 @@
             const modal = document.getElementById('userProfileModal');
             if (modal) {
                 modal.classList.remove('active');
-                setTimeout(() => {
-                    modal.remove();
-                }, 300);
+                setTimeout(() => modal.remove(), 300);
             }
             selectedUserProfile = null;
         }
 
-        function closeAllModals() {
-            const userProfileModal = document.getElementById('userProfileModal');
-            if (userProfileModal) {
-                userProfileModal.remove();
+        function toggleBlock() {
+            if (!selectedUserProfile) return;
+
+            if (blockedUsers.includes(selectedUserProfile)) {
+                blockedUsers = blockedUsers.filter(u => u !== selectedUserProfile);
+                alert('Usuario desbloqueado');
+            } else {
+                blockedUsers.push(selectedUserProfile);
+                alert('Usuario bloqueado');
+                if (currentChatRecipient === selectedUserProfile) {
+                    closePrivateChat();
+                }
             }
+            closeUserProfile();
         }
 
         function startPrivateChat() {
-            if (!selectedUserProfile) {
-                alert('No se ha seleccionado ningún usuario');
+            if (!selectedUserProfile) return;
+
+            if (!isStaff(selectedUserProfile)) {
+                alert('Solo puedes chatear con administradores y moderadores');
                 return;
             }
 
             if (blockedUsers.includes(selectedUserProfile)) {
-                alert('Desbloquea primero a este usuario para enviarle mensajes');
-                return;
-            }
-
-            const recipientUser = localData.registeredUsers.find(u => u.username === selectedUserProfile);
-            if (!recipientUser) {
-                alert('El usuario ya no está disponible');
-                closeUserProfile();
+                alert('Desbloquea primero a este usuario');
                 return;
             }
 
@@ -1761,144 +1435,7 @@
                 toggleChatList();
             }
             
-            setTimeout(() => {
-                openPrivateChat(selectedUserProfile);
-            }, 100);
-        }
-
-        function makeModerator(username) {
-            if (!isAdmin) {
-                alert('Solo el admin puede hacer moderadores');
-                return;
-            }
-
-            const user = localData.registeredUsers.find(u => u.username === username);
-            if (!user) return;
-
-            user.isModerator = true;
-            saveLocalData();
-            saveToFirebase();
-            alert('¡' + username + ' ahora es moderador!');
-        }
-
-        function removeModerator(username) {
-            if (!isAdmin) {
-                alert('Solo el admin puede remover moderadores');
-                return;
-            }
-
-            const user = localData.registeredUsers.find(u => u.username === username);
-            if (!user) return;
-
-            user.isModerator = false;
-            saveLocalData();
-            saveToFirebase();
-            alert('¡' + username + ' ha sido degradado a usuario común!');
-        }
-
-        function showModeratorsPanel() {
-            if (!isAdmin) {
-                alert('Solo el admin puede acceder a este panel');
-                return;
-            }
-
-            const modal = document.getElementById('moderatorsModal');
-            if (modal) {
-                modal.classList.add('active');
-                renderModeratorsPanel();
-            } else {
-                console.error('Modal de moderadores no encontrado');
-            }
-        }
-
-        function closeModeratorsPanel() {
-            const modal = document.getElementById('moderatorsModal');
-            if (modal) {
-                modal.classList.remove('active');
-            }
-        }
-
-        function renderModeratorsPanel() {
-            const moderatorsList = document.getElementById('moderatorsList');
-            const usersToPromoteList = document.getElementById('usersToPromoteList');
-            
-            if (!moderatorsList || !usersToPromoteList) {
-                console.error('Elementos del panel de moderadores no encontrados');
-                return;
-            }
-
-            const moderators = localData.registeredUsers.filter(u => u.isModerator);
-
-            if (moderators.length === 0) {
-                moderatorsList.innerHTML = '<p style="color: #999;">No hay moderadores registrados</p>';
-            } else {
-                moderatorsList.innerHTML = '';
-                moderators.forEach(mod => {
-                    const div = document.createElement('div');
-                    div.style.cssText = 'background: #f0f0f0; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;';
-                    div.innerHTML = `
-                        <div>
-                            <strong>${mod.name}</strong> <br>
-                            <small style="color: #666;">@${mod.username}</small>
-                        </div>
-                        <button class="btn btn-danger" onclick="removeModerator('${mod.username}'); renderModeratorsPanel(); renderUsersToPromote();">Remover</button>
-                    `;
-                    moderatorsList.appendChild(div);
-                });
-            }
-
-            renderUsersToPromote();
-        }
-
-        function renderUsersToPromote() {
-            const usersToPromoteList = document.getElementById('usersToPromoteList');
-            if (!usersToPromoteList) {
-                console.error('Elemento usersToPromoteList no encontrado');
-                return;
-            }
-
-            const nonModerators = localData.registeredUsers.filter(u => !u.isModerator && u.username !== ADMIN_USER);
-
-            if (nonModerators.length === 0) {
-                usersToPromoteList.innerHTML = '<p style="color: #999;">Todos los usuarios son moderadores</p>';
-            } else {
-                usersToPromoteList.innerHTML = '';
-                nonModerators.forEach(user => {
-                    const div = document.createElement('div');
-                    div.style.cssText = 'background: #f9f9f9; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;';
-                    div.innerHTML = `
-                        <div>
-                            <strong>${user.name}</strong> <br>
-                            <small style="color: #666;">@${user.username}</small>
-                        </div>
-                        <button class="btn btn-primary" onclick="makeModerator('${user.username}'); renderModeratorsPanel(); renderUsersToPromote();">Hacer MOD</button>
-                    `;
-                    usersToPromoteList.appendChild(div);
-                });
-            }
-        }
-
-        function toggleBlockUser() {
-            if (!selectedUserProfile) return;
-
-            if (blockedUsers.includes(selectedUserProfile)) {
-                blockedUsers = blockedUsers.filter(u => u !== selectedUserProfile);
-                alert('Usuario ' + selectedUserProfile + ' desbloqueado. Ahora puedes recibir mensajes de este usuario.');
-                document.getElementById('blockButton').textContent = '🚫 Bloquear';
-                document.getElementById('blockButton').className = 'profile-btn profile-btn-block';
-            } else {
-                blockedUsers.push(selectedUserProfile);
-                alert('Usuario ' + selectedUserProfile + ' bloqueado. No recibirás más mensajes de este usuario.');
-                document.getElementById('blockButton').textContent = '✅ Desbloquear';
-                document.getElementById('blockButton').className = 'profile-btn profile-btn-unblock';
-
-                if (currentChatRecipient === selectedUserProfile) {
-                    closePrivateChat();
-                }
-            }
-
-            saveBlockedUsers();
-            updateConversationsList();
+            setTimeout(() => openPrivateChat(selectedUserProfile), 100);
         }
 
         function toggleChatList() {
@@ -1924,38 +1461,18 @@
 
             const allUsers = localData.registeredUsers.filter(u =>
                 u.username !== currentUser &&
-                !blockedUsers.includes(u.username)
+                !blockedUsers.includes(u.username) &&
+                isStaff(u.username)
             );
 
             if (allUsers.length === 0) {
-                container.innerHTML = '<div class="no-conversations"><p>No hay usuarios disponibles</p></div>';
+                container.innerHTML = '<div class="empty-chat"><div class="empty-chat-icon">💬</div><p>No hay administradores disponibles</p></div>';
                 return;
             }
 
-            const conversationsWithMessages = [];
-            const conversationsWithoutMessages = [];
-
-            allUsers.forEach(user => {
-                const convId = getConversationId(currentUser, user.username);
-                const unreadCount = conversations[convId]?.unread || 0;
-                const lastMessage = conversations[convId]?.lastMessage || null;
-
-                const userData = { user, unreadCount, lastMessage };
-
-                if (lastMessage) {
-                    conversationsWithMessages.push(userData);
-                } else {
-                    conversationsWithoutMessages.push(userData);
-                }
-            });
-
-            conversationsWithMessages.sort((a, b) => b.lastMessage.timestamp - a.lastMessage.timestamp);
-
-            const sortedUsers = [...conversationsWithMessages, ...conversationsWithoutMessages];
-
             container.innerHTML = '';
 
-            sortedUsers.forEach(({ user, unreadCount, lastMessage }) => {
+            allUsers.forEach(user => {
                 const convItem = document.createElement('div');
                 convItem.className = 'conversation-item';
                 if (currentChatRecipient === user.username) {
@@ -1964,35 +1481,24 @@
 
                 const avatar = document.createElement('div');
                 avatar.className = 'conversation-avatar';
-                if (user.profilePicture) {
-                    avatar.innerHTML = '<img src="' + user.profilePicture + '" alt="' + user.username + '">';
-                } else {
-                    avatar.textContent = user.username.charAt(0).toUpperCase();
-                }
+                avatar.textContent = user.username.charAt(0).toUpperCase();
 
                 const info = document.createElement('div');
                 info.className = 'conversation-info';
 
                 const name = document.createElement('div');
                 name.className = 'conversation-name';
-                name.textContent = user.name;
+                name.textContent = user.name + ' (Staff)';
 
                 const preview = document.createElement('div');
                 preview.className = 'conversation-preview';
-                preview.textContent = lastMessage ? lastMessage.preview : 'Iniciar conversación';
+                preview.textContent = 'Iniciar conversación';
 
                 info.appendChild(name);
                 info.appendChild(preview);
 
                 convItem.appendChild(avatar);
                 convItem.appendChild(info);
-
-                if (unreadCount > 0) {
-                    const badge = document.createElement('div');
-                    badge.className = 'conversation-unread';
-                    badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-                    convItem.appendChild(badge);
-                }
 
                 convItem.onclick = () => openPrivateChat(user.username);
 
@@ -2005,6 +1511,11 @@
         }
 
         function openPrivateChat(recipientUsername) {
+            if (!isStaff(recipientUsername)) {
+                alert('Solo puedes chatear con staff');
+                return;
+            }
+
             if (blockedUsers.includes(recipientUsername)) {
                 alert('Has bloqueado a este usuario');
                 return;
@@ -2021,14 +1532,7 @@
             document.getElementById('chatRecipientName').textContent = recipient.name;
             document.getElementById('chatWindow').classList.add('active');
 
-            const convId = getConversationId(currentUser, recipientUsername);
-            if (conversations[convId]) {
-                conversations[convId].unread = 0;
-            }
-
             renderPrivateMessages();
-            updateConversationsList();
-            updateChatNotification();
 
             setTimeout(() => {
                 document.getElementById('chatInput').focus();
@@ -2048,7 +1552,7 @@
             }
         }
 
-        function listenToPrivateMessages() {
+        function listenToMessages() {
             if (!firebaseInitialized || !database || !currentUser) return;
 
             database.ref('privateMessages').on('value', (snapshot) => {
@@ -2067,6 +1571,8 @@
 
                     if (blockedUsers.includes(otherUser)) return;
 
+                    if (!isStaff(otherUser) && !isStaff(currentUser)) return;
+
                     const messages = Object.values(allMessages[convId]).sort((a, b) => a.timestamp - b.timestamp);
 
                     const unreadCount = messages.filter(msg =>
@@ -2081,7 +1587,7 @@
                         messages: messages,
                         unread: unreadCount,
                         lastMessage: {
-                            preview: lastMsg.text.substring(0, 40) + (lastMsg.text.length > 40 ? '...' : ''),
+                            preview: lastMsg.text.substring(0, 40),
                             timestamp: lastMsg.timestamp
                         }
                     };
@@ -2094,7 +1600,6 @@
 
                 if (currentChatRecipient) {
                     renderPrivateMessages();
-                    markMessagesAsRead(currentChatRecipient);
                 }
 
                 if (isListOpen) {
@@ -2111,11 +1616,9 @@
             const conversation = conversations[convId];
 
             if (!conversation || conversation.messages.length === 0) {
-                container.innerHTML = '<div class="empty-chat"><div class="empty-chat-icon">💬</div><p>No hay mensajes</p><p style="font-size: 12px; color: #ccc;">¡Envía el primero!</p></div>';
+                container.innerHTML = '<div class="empty-chat"><div class="empty-chat-icon">💬</div><p>No hay mensajes</p></div>';
                 return;
             }
-
-            const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
 
             container.innerHTML = '';
 
@@ -2142,9 +1645,7 @@
                 container.appendChild(messageDiv);
             });
 
-            if (wasAtBottom) {
-                setTimeout(() => scrollChatToBottom(), 100);
-            }
+            scrollChatToBottom();
         }
 
         function sendPrivateMessage() {
@@ -2155,8 +1656,8 @@
 
             if (!message) return;
 
-            if (blockedUsers.includes(currentChatRecipient)) {
-                alert('No puedes enviar mensajes a un usuario bloqueado');
+            if (!isStaff(currentChatRecipient)) {
+                alert('Solo puedes enviar mensajes a staff');
                 return;
             }
 
@@ -2183,31 +1684,6 @@
             }
         }
 
-        function markMessagesAsRead(senderUsername) {
-            if (!firebaseInitialized || !database || !currentUser) return;
-
-            const convId = getConversationId(currentUser, senderUsername);
-            const conversation = conversations[convId];
-
-            if (!conversation) return;
-
-            conversation.messages.forEach(msg => {
-                if (msg.to === currentUser && !msg.read && msg.from === senderUsername) {
-                    database.ref('privateMessages/' + convId).orderByChild('timestamp').equalTo(msg.timestamp).once('value', (snapshot) => {
-                        snapshot.forEach((childSnapshot) => {
-                            childSnapshot.ref.update({ read: true });
-                        });
-                    });
-                }
-            });
-        }
-
-        function handleChatKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendPrivateMessage();
-            }
-        }
-
         function scrollChatToBottom() {
             const container = document.getElementById('chatMessages');
             container.scrollTop = container.scrollHeight;
@@ -2228,8 +1704,7 @@
         function waitForFirebase() {
             if (typeof firebase !== 'undefined') {
                 loadUserSession();
-                initializeFirebase();
-                closeAllModals();
+                initFirebase();
             } else {
                 setTimeout(waitForFirebase, 100);
             }
@@ -2240,10 +1715,8 @@
         updateCategoryFilter();
         renderGallery();
         updateStats();
-        closeAllModals();
 
         window.addEventListener('load', () => {
-            closeAllModals();
             const hash = window.location.hash;
             if (hash && hash.startsWith('#post-')) {
                 setTimeout(() => {
@@ -2251,15 +1724,10 @@
                     if (element) {
                         showSection('gallery');
                         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        element.style.animation = 'highlight 2s ease';
                     }
                 }, 4500);
             }
         });
-
-        const style = document.createElement('style');
-        style.textContent = '@keyframes highlight { 0%, 100% { box-shadow: 0 5px 20px rgba(0,0,0,0.1); } 50% { box-shadow: 0 5px 30px rgba(102, 126, 234, 0.5); transform: scale(1.02); } }';
-        document.head.appendChild(style);
     </script>
 </body>
 </html>
