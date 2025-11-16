@@ -171,6 +171,15 @@
             font-size: 14px;
         }
         .form-group textarea { resize: vertical; min-height: 100px; }
+        .file-size-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #856404;
+        }
         .stats-banner {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -508,6 +517,99 @@
         .mod-user-card.promote {
             background: #f9f9f9;
         }
+        .profile-picture-area {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .profile-picture-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            background: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            border: 3px solid #667eea;
+            overflow: hidden;
+            font-weight: bold;
+        }
+        .profile-picture-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .image-fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+        .image-fullscreen-overlay.active {
+            display: flex;
+        }
+        .image-fullscreen-overlay img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+        }
+        .image-fullscreen-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 36px;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .image-fullscreen-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+        .upload-progress {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            display: none;
+        }
+        .upload-progress.active {
+            display: block;
+        }
+        .upload-progress-bar {
+            height: 20px;
+            background: #667eea;
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        .upload-progress-text {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+        }
         @media (max-width: 768px) {
             .chat-list-window, .chat-window { 
                 bottom: 90px; 
@@ -549,6 +651,7 @@
                         <div class="user-avatar" id="userAvatar">U</div>
                         <span id="userName"></span>
                         <span id="adminBadge" class="admin-badge hidden">ADMIN</span>
+                        <button class="btn btn-secondary" onclick="showMyProfile()">Mi Perfil</button>
                         <button class="btn btn-secondary" onclick="logout()">Salir</button>
                     </div>
                 </div>
@@ -608,8 +711,18 @@
                     <div id="fileInputArea" class="form-group">
                         <label>Archivo:</label>
                         <input type="file" id="contentFile" accept="image/*,video/*">
+                        <div class="file-size-warning">
+                            <strong>⚠️ Límites recomendados:</strong><br>
+                            • Imágenes: máximo 1MB (fotos de buena calidad)<br>
+                            • Videos: máximo 2MB (~15 segundos, 480p)<br>
+                            <small>Los archivos se convierten a base64 y se guardan en Firebase. Archivos muy grandes pueden fallar.</small>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Publicar</button>
+                    <div class="upload-progress" id="uploadProgress">
+                        <div class="upload-progress-bar" id="uploadProgressBar" style="width: 0%"></div>
+                        <div class="upload-progress-text" id="uploadProgressText">Procesando archivo...</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="uploadSubmitBtn">Publicar</button>
                 </form>
             </section>
 
@@ -634,6 +747,33 @@
                 </div>
             </section>
         </div>
+    </div>
+
+    <div class="modal" id="myProfileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Mi Perfil</h2>
+                <button class="close-modal" onclick="closeModal('myProfileModal')">&times;</button>
+            </div>
+            <form id="myProfileForm">
+                <div class="profile-picture-area">
+                    <div class="profile-picture-preview" id="myProfilePicturePreview">👤</div>
+                    <label style="display: block; margin-bottom: 10px; color: #333; font-weight: bold;">
+                        Foto de Perfil:
+                    </label>
+                    <input type="file" id="myProfilePicture" accept="image/*" onchange="previewMyProfilePicture()">
+                    <div class="file-size-warning" style="margin-top: 10px;">
+                        <small>Máximo 500KB para foto de perfil</small>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="image-fullscreen-overlay" id="imageFullscreenOverlay" onclick="closeFullscreenImage()">
+        <button class="image-fullscreen-close" onclick="closeFullscreenImage(); event.stopPropagation();">×</button>
+        <img id="fullscreenImage" src="" alt="Imagen en pantalla completa">
     </div>
 
     <div class="modal" id="loginModal">
@@ -714,6 +854,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
     <script>
         const ADMIN_USER = 'Inder';
@@ -723,6 +864,7 @@
         let isModerator = false;
         let currentCategory = 'all';
         let database = null;
+        let storage = null;
         let firebaseInitialized = false;
         let currentChatRecipient = null;
         let selectedUserProfile = null;
@@ -739,7 +881,8 @@
                 password: ADMIN_PASSWORD,
                 name: 'Administrador',
                 email: 'admin@portal.com',
-                isModerator: false
+                isModerator: false,
+                profilePicture: null
             }]
         };
 
@@ -750,12 +893,58 @@
         }
 
         function loadLocalData() {
-            const saved = localStorage.getItem('portalData');
-            if (saved) localData = JSON.parse(saved);
+            try {
+                const saved = localStorage.getItem('portalData');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    localData = parsed;
+                    console.log('Datos cargados desde localStorage');
+                }
+            } catch (error) {
+                console.error('Error cargando datos locales:', error);
+                alert('Error al cargar datos locales. Se usarán datos por defecto.');
+            }
         }
 
         function saveLocalData() {
-            localStorage.setItem('portalData', JSON.stringify(localData));
+            try {
+                const dataString = JSON.stringify(localData);
+                const sizeInBytes = new Blob([dataString]).size;
+                const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
+                
+                console.log('Tamaño de datos a guardar:', sizeInMB + 'MB');
+                
+                // Verificar si excede el límite de localStorage (típicamente 5-10MB)
+                if (sizeInBytes > 8 * 1024 * 1024) {
+                    console.warn('⚠️ Los datos son muy grandes para localStorage');
+                    
+                    // Guardar solo las últimas 15 publicaciones
+                    const backup = [...localData.contentItems];
+                    localData.contentItems = localData.contentItems.slice(0, 15);
+                    
+                    try {
+                        localStorage.setItem('portalData', JSON.stringify(localData));
+                        console.log('Guardado con límite de 15 publicaciones');
+                        alert('⚠️ Advertencia: Solo se guardaron las últimas 15 publicaciones localmente debido al tamaño. Firebase tiene todo el contenido.');
+                    } catch (e) {
+                        console.error('Error incluso con límite:', e);
+                        alert('Error: No se pudo guardar localmente. Los datos están en Firebase.');
+                    }
+                    
+                    localData.contentItems = backup;
+                } else {
+                    localStorage.setItem('portalData', dataString);
+                    console.log('✅ Datos guardados en localStorage');
+                }
+            } catch (error) {
+                console.error('Error guardando en localStorage:', error);
+                
+                if (error.name === 'QuotaExceededError') {
+                    alert('⚠️ Espacio de almacenamiento local lleno. Los datos están guardados en Firebase.');
+                } else {
+                    alert('Error al guardar localmente: ' + error.message);
+                }
+            }
         }
 
         function loadUserSession() {
@@ -780,7 +969,8 @@
             document.getElementById('guest-buttons').classList.add('hidden');
             document.getElementById('user-logged').classList.remove('hidden');
             document.getElementById('userName').textContent = currentUser;
-            document.getElementById('userAvatar').textContent = currentUser.charAt(0).toUpperCase();
+            
+            updateUserAvatarDisplay();
             
             if (isAdmin || isModerator) {
                 document.getElementById('adminBadge').classList.remove('hidden');
@@ -808,6 +998,81 @@
             renderGallery();
         }
 
+        function updateUserAvatarDisplay() {
+            const user = localData.registeredUsers.find(u => u.username === currentUser);
+            if (!user) return;
+
+            const avatarEl = document.getElementById('userAvatar');
+            if (user.profilePicture) {
+                avatarEl.innerHTML = '<img src="' + user.profilePicture + '" alt="' + currentUser + '">';
+            } else {
+                avatarEl.innerHTML = '';
+                avatarEl.textContent = currentUser.charAt(0).toUpperCase();
+            }
+        }
+
+        function showMyProfile() {
+            if (!currentUser) {
+                alert('Inicia sesión primero');
+                return;
+            }
+
+            const user = localData.registeredUsers.find(u => u.username === currentUser);
+            if (!user) return;
+
+            const preview = document.getElementById('myProfilePicturePreview');
+            if (user.profilePicture) {
+                preview.innerHTML = '<img src="' + user.profilePicture + '" alt="perfil">';
+            } else {
+                preview.innerHTML = '';
+                preview.textContent = currentUser.charAt(0).toUpperCase();
+            }
+
+            document.getElementById('myProfileModal').classList.add('active');
+        }
+
+        function previewMyProfilePicture() {
+            const file = document.getElementById('myProfilePicture').files[0];
+            if (!file) return;
+
+            if (file.size > 500 * 1024) {
+                alert('La imagen es muy grande. Máximo 500KB para foto de perfil');
+                document.getElementById('myProfilePicture').value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.getElementById('myProfilePicturePreview');
+                preview.innerHTML = '<img src="' + e.target.result + '" alt="preview">';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.getElementById('myProfileForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const user = localData.registeredUsers.find(u => u.username === currentUser);
+            if (!user) return;
+
+            const file = document.getElementById('myProfilePicture').files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    user.profilePicture = event.target.result;
+                    saveLocalData();
+                    saveToFirebase();
+                    alert('¡Perfil actualizado!');
+                    closeModal('myProfileModal');
+                    updateUserAvatarDisplay();
+                    renderGallery();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Selecciona una foto para tu perfil');
+            }
+        });
+
         function initFirebase() {
             try {
                 firebase.initializeApp({
@@ -820,7 +1085,9 @@
                     appId: "1:903539413469:web:697eed91e1f05ba4662634"
                 });
                 database = firebase.database();
+                storage = firebase.storage();
                 firebaseInitialized = true;
+                console.log('✅ Firebase inicializado correctamente');
 
                 database.ref('content').on('value', (snapshot) => {
                     const data = snapshot.val();
@@ -831,6 +1098,7 @@
                         updateCategoryFilter();
                         renderGallery();
                         updateStats();
+                        console.log('Datos sincronizados desde Firebase');
                     }
                 });
 
@@ -841,7 +1109,8 @@
 
                 listenToMessages();
             } catch (error) {
-                console.error('Firebase error:', error);
+                console.error('❌ Error inicializando Firebase:', error);
+                alert('Error conectando con Firebase. Usando modo local.');
             }
         }
 
@@ -850,8 +1119,18 @@
                 database.ref('content').set({
                     contentItems: localData.contentItems,
                     categories: localData.categories
+                }).then(() => {
+                    console.log('✅ Contenido guardado en Firebase');
+                }).catch(error => {
+                    console.error('❌ Error guardando contenido en Firebase:', error);
+                    alert('Error al guardar en Firebase: ' + error.message);
                 });
-                database.ref('users').set(localData.registeredUsers);
+                
+                database.ref('users').set(localData.registeredUsers).catch(error => {
+                    console.error('❌ Error guardando usuarios en Firebase:', error);
+                });
+            } else {
+                console.warn('Firebase no disponible, usando solo localStorage');
             }
         }
 
@@ -913,7 +1192,7 @@
                 return;
             }
 
-            localData.registeredUsers.push({ username, password, name, email, isModerator: false });
+            localData.registeredUsers.push({ username, password, name, email, isModerator: false, profilePicture: null });
             saveLocalData();
             saveToFirebase();
             alert('¡Cuenta creada!');
@@ -1062,22 +1341,39 @@
         function updateUploadForm() {
             const type = document.getElementById('contentType').value;
             const fileArea = document.getElementById('fileInputArea');
-            fileArea.style.display = (type === 'info') ? 'none' : 'block';
+            const fileInput = document.getElementById('contentFile');
+            
+            if (type === 'info') {
+                fileArea.style.display = 'none';
+                fileInput.value = '';
+            } else {
+                fileArea.style.display = 'block';
+                if (type === 'image') {
+                    fileInput.accept = 'image/jpeg,image/jpg,image/png,image/gif,image/webp';
+                } else if (type === 'video') {
+                    fileInput.accept = 'video/mp4,video/webm,video/ogg';
+                }
+            }
         }
 
-        document.getElementById('uploadForm').addEventListener('submit', (e) => {
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!isAdmin && !isModerator) {
                 alert('Solo admin y moderadores pueden publicar');
                 return;
             }
 
-            const title = document.getElementById('contentTitle').value;
-            const description = document.getElementById('contentDescription').value;
+            const title = document.getElementById('contentTitle').value.trim();
+            const description = document.getElementById('contentDescription').value.trim();
             const type = document.getElementById('contentType').value;
             const file = document.getElementById('contentFile').files[0];
             const categorySelect = document.getElementById('categorySelect').value;
             const newCategoryName = document.getElementById('newCategoryName').value.trim();
+
+            if (!title) {
+                alert('El título es obligatorio');
+                return;
+            }
 
             let category = '';
             if (categorySelect === 'nueva') {
@@ -1113,28 +1409,128 @@
                 updateCategoryFilter();
                 renderGallery();
                 updateStats();
-                alert('¡Publicado!');
+                alert('¡Publicado exitosamente!');
                 document.getElementById('uploadForm').reset();
                 document.getElementById('newCategoryInput').classList.remove('active');
+                document.getElementById('categorySelect').value = '';
+                document.getElementById('uploadProgress').classList.remove('active');
                 showSection('gallery');
             };
 
             if (type === 'info') {
                 processContent(null);
             } else if (file) {
-                const maxSize = type === 'video' ? 5 * 1024 * 1024 : 3 * 1024 * 1024;
-                if (file.size > maxSize) {
-                    alert('El archivo es muy grande. Máximo ' + (type === 'video' ? '5MB' : '3MB'));
+                const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+                
+                if (type === 'image' && !validImageTypes.includes(file.type)) {
+                    alert('Formato de imagen no válido. Usa JPG, PNG, GIF o WebP');
                     return;
                 }
                 
-                const reader = new FileReader();
-                reader.onload = (event) => processContent(event.target.result);
-                reader.readAsDataURL(file);
+                if (type === 'video' && !validVideoTypes.includes(file.type)) {
+                    alert('Formato de video no válido. Usa MP4, WebM u OGG');
+                    return;
+                }
+
+                // Límites ajustados y realistas
+                const maxImageSize = 1 * 1024 * 1024; // 1MB para imágenes
+                const maxVideoSize = 2 * 1024 * 1024; // 2MB para videos
+                const maxSize = type === 'image' ? maxImageSize : maxVideoSize;
+                
+                if (file.size > maxSize) {
+                    const maxMB = type === 'image' ? '1MB' : '2MB';
+                    alert('⚠️ El archivo es muy grande. Máximo ' + maxMB + ' para ' + type + 's.\n\nEsto es necesario porque los archivos se guardan en base64 y pueden llenar el almacenamiento rápidamente.');
+                    return;
+                }
+                
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Subiendo...';
+                submitBtn.disabled = true;
+                
+                document.getElementById('uploadProgress').classList.add('active');
+                
+                uploadWithBase64Improved(file, processContent, () => {
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    document.getElementById('uploadProgress').classList.remove('active');
+                });
             } else {
                 alert('Selecciona un archivo');
             }
         });
+
+        function uploadWithBase64Improved(file, callback, errorCallback) {
+            const reader = new FileReader();
+            
+            reader.onloadstart = () => {
+                document.getElementById('uploadProgressBar').style.width = '0%';
+                document.getElementById('uploadProgressText').textContent = 'Procesando archivo...';
+                console.log('Iniciando carga de archivo:', file.name, 'Tamaño:', (file.size / 1024).toFixed(2) + 'KB');
+            };
+
+            reader.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percentComplete = (event.loaded / event.total) * 100;
+                    document.getElementById('uploadProgressBar').style.width = percentComplete + '%';
+                    document.getElementById('uploadProgressText').textContent = 'Cargando: ' + Math.round(percentComplete) + '%';
+                }
+            };
+            
+            reader.onload = (event) => {
+                try {
+                    const result = event.target.result;
+                    if (!result) {
+                        throw new Error('No se pudo leer el archivo');
+                    }
+                    
+                    // Calcular tamaño aproximado del base64
+                    const base64Size = result.length * 0.75;
+                    const sizeInMB = (base64Size / (1024 * 1024)).toFixed(2);
+                    console.log('Archivo convertido a base64. Tamaño:', sizeInMB + 'MB');
+                    
+                    // Verificación de seguridad adicional
+                    if (base64Size > 3 * 1024 * 1024) {
+                        throw new Error('El archivo codificado es muy grande (' + sizeInMB + 'MB). Máximo recomendado: 3MB');
+                    }
+                    
+                    document.getElementById('uploadProgressBar').style.width = '100%';
+                    document.getElementById('uploadProgressText').textContent = '¡Completado!';
+                    
+                    // Intentar guardar con manejo de errores
+                    setTimeout(() => {
+                        try {
+                            callback(result);
+                            console.log('✅ Archivo guardado exitosamente');
+                        } catch (saveError) {
+                            console.error('❌ Error al guardar:', saveError);
+                            
+                            if (saveError.name === 'QuotaExceededError') {
+                                alert('❌ Error: El almacenamiento local está lleno.\n\nSoluciones:\n1. Elimina algunas publicaciones antiguas\n2. Usa archivos más pequeños\n3. Los datos están en Firebase');
+                            } else {
+                                alert('❌ Error al guardar: ' + saveError.message);
+                            }
+                            
+                            if (errorCallback) errorCallback();
+                        }
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('❌ Error procesando archivo:', error);
+                    alert('❌ Error: ' + error.message);
+                    if (errorCallback) errorCallback();
+                }
+            };
+            
+            reader.onerror = (error) => {
+                console.error('❌ Error al leer archivo:', error);
+                alert('❌ Error al leer el archivo. Intenta de nuevo');
+                if (errorCallback) errorCallback();
+            };
+            
+            reader.readAsDataURL(file);
+        }
 
         function deletePost(postId) {
             if (!isAdmin) return;
@@ -1244,7 +1640,7 @@
 
                 let mediaHTML = '';
                 if (item.type === 'image') {
-                    mediaHTML = '<img src="' + item.url + '" alt="' + item.title + '">';
+                    mediaHTML = '<img src="' + item.url + '" alt="' + item.title + '" onclick="openFullscreenImage(\'' + item.url + '\')" style="cursor: zoom-in;">';
                 } else if (item.type === 'video') {
                     mediaHTML = '<video src="' + item.url + '" controls></video>';
                 } else {
@@ -1284,7 +1680,7 @@
                 const shareButtons = '<div class="share-buttons">' +
                     '<button class="btn-share btn-whatsapp" onclick="shareContent(' + item.id + ', \'whatsapp\')">📱 WhatsApp</button>' +
                     '<button class="btn-share btn-facebook" onclick="shareContent(' + item.id + ', \'facebook\')">📘 Facebook</button>' +
-                    '<button class="btn-share btn-twitter" onclick="shareContent(' + item.id + ', \'twitter\')">🦅 Twitter</button>' +
+                    '<button class="btn-share btn-twitter" onclick="shareContent(' + item.id + ', \'twitter\')">🐦 Twitter</button>' +
                     '<button class="btn-share btn-copy" id="copy-btn-' + item.id + '" onclick="shareContent(' + item.id + ', \'copy\')">📋 Copiar</button>' +
                     '</div>';
 
@@ -1295,6 +1691,20 @@
 
                 grid.appendChild(card);
             });
+        }
+
+        function openFullscreenImage(imageUrl) {
+            const overlay = document.getElementById('imageFullscreenOverlay');
+            const img = document.getElementById('fullscreenImage');
+            img.src = imageUrl;
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeFullscreenImage() {
+            const overlay = document.getElementById('imageFullscreenOverlay');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
         }
 
         function showUserProfile(username) {
@@ -1343,7 +1753,14 @@
 
             document.getElementById('profileName').textContent = user.name || username;
             document.getElementById('profileUsername').textContent = '@' + username;
-            document.getElementById('profileAvatar').textContent = username.charAt(0).toUpperCase();
+            
+            const avatarEl = document.getElementById('profileAvatar');
+            if (user.profilePicture) {
+                avatarEl.innerHTML = '<img src="' + user.profilePicture + '" alt="' + username + '">';
+            } else {
+                avatarEl.innerHTML = '';
+                avatarEl.textContent = username.charAt(0).toUpperCase();
+            }
 
             let blockBtn = document.getElementById('blockButton');
             if (blockedUsers.includes(username)) {
@@ -1481,7 +1898,11 @@
 
                 const avatar = document.createElement('div');
                 avatar.className = 'conversation-avatar';
-                avatar.textContent = user.username.charAt(0).toUpperCase();
+                if (user.profilePicture) {
+                    avatar.innerHTML = '<img src="' + user.profilePicture + '" alt="' + user.username + '">';
+                } else {
+                    avatar.textContent = user.username.charAt(0).toUpperCase();
+                }
 
                 const info = document.createElement('div');
                 info.className = 'conversation-info';
