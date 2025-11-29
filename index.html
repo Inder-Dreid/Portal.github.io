@@ -597,7 +597,7 @@
         <div class="anime-character">
             <div class="character-img">🌸</div>
             <div class="speech-bubble">
-                <h2>¡Hello World! 👋</h2>
+                <h2>¡Hello World! </h2>
                 <p>Bienvenido al portal</p>
             </div>
         </div>
@@ -649,7 +649,7 @@
             </section>
 
             <section id="upload" class="section">
-                <h1>Panel de Administrador 📤</h1>
+                <h1>Panel de Administrador </h1>
                 <form id="uploadForm">
                     <div class="form-group">
                         <label>Tipo:</label>
@@ -686,7 +686,7 @@
             </section>
 
             <section id="gallery" class="section">
-                <h1>Galería 🖼️</h1>
+                <h1>Galería </h1>
                 <div class="category-filter" id="categoryFilter">
                     <button class="category-btn active" onclick="filterByCategory('all')">📂 Todas</button>
                 </div>
@@ -701,7 +701,7 @@
                 </div>
                 <hr style="border: 1px solid #ddd; margin: 30px 0;">
                 <div>
-                    <h3 style="color: #667eea; margin-bottom: 15px;">Promover a Moderador ⬆️</h3>
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Promover a Moderador </h3>
                     <div id="usersToPromoteList"></div>
                 </div>
             </section>
@@ -973,7 +973,7 @@
                 if (isAdmin) {
                     const moderatorsLink = document.createElement('a');
                     moderatorsLink.href = '#';
-                    moderatorsLink.textContent = '👥 Moderadores';
+                    moderatorsLink.textContent = ' Moderadores';
                     moderatorsLink.id = 'moderatorsLink';
                     moderatorsLink.onclick = (e) => { e.preventDefault(); showSection('moderators'); renderModeratorsPanel(); };
                     document.querySelector('#navLinks').appendChild(moderatorsLink);
@@ -1914,7 +1914,7 @@
                     }
                     
                     if (user.isModerator) {
-                        moderatorBtn.textContent = '👤 Remover Moderador';
+                        moderatorBtn.textContent = ' Remover Moderador';
                         moderatorBtn.style.background = '#ff9800';
                         moderatorBtn.style.color = 'white';
                         moderatorBtn.onclick = () => {
